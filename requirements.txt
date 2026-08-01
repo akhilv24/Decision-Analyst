@@ -19,3 +19,4 @@ opencv-python-headless>=4.10.0
 statsmodels>=0.14.0
 reportlab>=4.0.0
 matplotlib>=3.8.0
+pdfplumber>=0.11.0
