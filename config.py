@@ -34,6 +34,7 @@ class Config:
     # Google OAuth settings
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
     GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+    PUBLIC_BASE_URL = os.environ.get('PUBLIC_BASE_URL', '')
 
 class DevelopmentConfig(Config):
     """Development configuration."""

@@ -9,6 +9,7 @@ import logging
 import shutil
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 import json
 import numpy as np
 import pandas as pd
@@ -59,6 +60,7 @@ app = Flask(__name__)
 config_class = DevelopmentConfig if os.environ.get('FLASK_ENV') == 'development' else ProductionConfig
 app.config.from_object(config_class)
 app.json_encoder = NumpyEncoder
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Initialize AI Analyzer (skip during database init)
 if os.environ.get('SKIP_GROQ') != '1':
