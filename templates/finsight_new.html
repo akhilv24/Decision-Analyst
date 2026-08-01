@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Analyst Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      color: #2c3e50;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 80px;
+      background: #1e2d3d;
+      padding: 20px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
+      transition: width 0.24s ease;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .sidebar:hover {
+      width: 200px;
+    }
+
+    .sidebar-brand {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-logo {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .sidebar-appname {
+      font-size: 11px;
+      color: #7f98b4;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      opacity: 0;
+      max-height: 0;
+      transition: opacity 0.24s ease, max-height 0.24s ease;
+    }
+
+    .sidebar:hover .sidebar-appname {
+      opacity: 1;
+      max-height: 24px;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      align-items: center;
+    }
+
+    .sidebar-nav.main {
+      margin-top: 6px;
+    }
+
+    .sidebar-divider {
+      width: calc(100% - 18px);
+      border-top: 1px solid rgba(148, 163, 184, 0.28);
+      margin: 6px 0;
+    }
+
+    .sidebar-item {
+      width: 56px;
+      min-height: 54px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      color: #7f98b4;
+      border: 1px solid transparent;
+      transition: all 0.24s;
+      position: relative;
+      padding: 8px 6px;
+    }
+
+    .sidebar-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      flex-shrink: 0;
+    }
+
+    .sidebar-item-label {
+      font-size: 10px;
+      line-height: 1.1;
+      letter-spacing: .2px;
+      text-align: center;
+      color: inherit;
+      white-space: nowrap;
+      font-weight: 500;
+      opacity: 0;
+      max-width: 0;
+      transition: opacity 0.2s ease, max-width 0.2s ease;
+    }
+
+    .sidebar:hover .sidebar-item {
+      width: calc(100% - 8px);
+      min-height: 64px;
+      border-radius: 12px;
+    }
+
+    .sidebar:hover .sidebar-item-label {
+      opacity: 1;
+      max-width: 120px;
+      font-size: 11px;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(125, 211, 252, 0.1);
+      color: #bcd1e8;
+      border-color: rgba(125, 211, 252, 0.15);
+    }
+
+    .sidebar-item.active {
+      background: #253f58;
+      color: white;
+      border-color: rgba(186, 230, 253, 0.22);
+    }
+
+    .sidebar-item[data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #0f172a;
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 11px;
+      line-height: 1;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.16s ease;
+      z-index: 20;
+    }
+
+    .sidebar:not(:hover) .sidebar-item[data-tooltip]:hover::after {
+      opacity: 1;
+    }
+
+    .sidebar-meta {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding-top: 6px;
+    }
+
+    .sidebar-version {
+      color: #5f7895;
+      font-size: 11px;
+      opacity: 0;
+      max-height: 0;
+      transition: opacity 0.24s ease, max-height 0.24s ease;
+    }
+
+    .sidebar:hover .sidebar-version {
+      opacity: 1;
+      max-height: 18px;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main-container {
+      margin-left: 80px;
+      width: calc(100% - 80px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: white;
+      border-bottom: 1px solid #ecf0f1;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .topbar-title {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .date-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #f8f9fa;
+      border: 1px solid #ecf0f1;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .ai-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid #bfdbfe;
+      color: #0284c7;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ai-btn:hover {
+      background: #f0f9ff;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #3498db;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── CONTENT AREA ── */
+    .content {
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    /* ── LOADING/ERROR STATES ── */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #ecf0f1;
+      border-top-color: #3498db;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-banner {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      padding: 24px;
+      color: #991b1b;
+      text-align: center;
+    }
+
+    /* ── TABS ── */
+    .tabs-container {
+      display: flex;
+      gap: 24px;
+      border-bottom: 2px solid #ecf0f1;
+      margin-bottom: 28px;
+    }
+
+    .tab-btn {
+      padding: 12px 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #95a5a6;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      color: #3498db;
+      border-bottom-color: #3498db;
+    }
+
+    /* ── KPI CARDS ── */
+    .kpi-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: white;
+      border: 1px solid #ecf0f1;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+
+    .kpi-card:hover {
+      border-color: #bfdbfe;
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 6px;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: #95a5a6;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kpi-sub.positive { color: #16a34a; }
+    .kpi-sub.negative { color: #ef4444; }
+
+    /* ── CHARTS GRID ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .chart-card {
+      background: white;
+      border: 1px solid #ecf0f1;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .chart-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 300px;
+    }
+
+    .chart-wrap-tall {
+      position: relative;
+      height: 350px;
+    }
+
+    /* ── FULL WIDTH CHARTS ── */
+    .full-width-chart {
+      background: white;
+      border: 1px solid #ecf0f1;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* ── ANOMALY TABLE ── */
+    .table-wrap {
+      background: white;
+      border: 1px solid #ecf0f1;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f8f9fa;
+      color: #64748b;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #ecf0f1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #ecf0f1;
+      color: #2c3e50;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    /* ── CHAT SECTION ── */
+    .chat-container {
+      background: #0b1220;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px;
+      min-height: 0;
+      max-width: 100%;
+      width: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35);
+    }
+
+    .chat-container .chart-card-title {
+      color: #e2e8f0;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .chat-help {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .chat-messages {
+      flex: 0 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+      overflow-y: auto;
+      max-height: 140px;
+      min-height: 80px;
+      padding: 8px;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      background: #0f172a;
+    }
+
+    .chat-msg {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 85%;
+    }
+
+    .chat-msg.user {
+      align-self: flex-end;
+      background: #1e3a8a;
+      border: 1px solid #3b82f6;
+      color: #dbeafe;
+    }
+
+    .chat-msg.ai {
+      align-self: flex-start;
+      background: #0b3a2a;
+      border: 1px solid #10b981;
+      color: #dcfce7;
+    }
+
+    .chat-placeholder {
+      color: #94a3b8;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .chat-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: #111827;
+      border-color: #38bdf8;
+      color: #e0f2fe;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .chat-input::placeholder {
+      color: #94a3b8;
+    }
+
+    .chat-input:focus {
+      border-color: #38bdf8;
+    }
+
+    .btn-send {
+      padding: 10px 16px;
+      background: #00e676;
+      color: #001b10;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-send:hover {
+      background: #00c853;
+    }
+
+    .btn-send:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    /* ── CFO REPORT ── */
+    .cfo-report {
+      background: white;
+      border: 1px solid #ecf0f1;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .cfo-content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #475569;
+    }
+
+    .cfo-content h2 {
+      color: #2c3e50;
+      font-size: 16px;
+      margin: 12px 0 8px;
+      font-weight: 600;
+    }
+
+    /* ── UTILITY ── */
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3498db;
+      display: inline-block;
+    }
+
+    .dot.green { background: #16a34a; }
+    .dot.red { background: #ef4444; }
+    .dot.orange { background: #f59e0b; }
+
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" style="width:100%; height:100%; object-fit:contain; border-radius:12px;">
+    </div>
+    <div class="sidebar-appname">Decision Analyst</div>
+  </div>
+  <div class="sidebar-nav main">
+    <!-- Dashboard -->
+    <div class="sidebar-item active" title="Dashboard" data-tooltip="Dashboard" data-nav="snapshot">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span class="sidebar-item-label">Dashboard</span>
+    </div>
+    <!-- AI Insights -->
+    <div class="sidebar-item" title="AI Insights" data-tooltip="AI Insights" data-nav="revenue-analysis">
+      <svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8z"/><circle cx="18.5" cy="5.5" r="1" fill="currentColor" stroke="none"/></svg>
+      <span class="sidebar-item-label">AI Insights</span>
+    </div>
+    <!-- Goals -->
+    <div class="sidebar-item" title="Goals" data-tooltip="Goals" data-nav="delivery">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>
+      <span class="sidebar-item-label">Goals</span>
+    </div>
+    <!-- Reports -->
+    <div class="sidebar-item" title="Reports" data-tooltip="Reports" data-nav="profit-loss">
+      <svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      <span class="sidebar-item-label">Reports</span>
+    </div>
+    <!-- Analytics -->
+    <div class="sidebar-item" title="Analytics" data-tooltip="Analytics" data-nav="cashflow">
+      <svg viewBox="0 0 24 24"><path d="M3 12h6v8H3zM10 3h6v17h-6zM17 7h6v13h-6z"/></svg>
+      <span class="sidebar-item-label">Analytics</span>
+    </div>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-nav utility">
+    <div class="sidebar-item" title="Settings" data-tooltip="Settings" data-nav="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-16.78 7.78l4.24-4.24m5.08-5.08l4.24-4.24"/></svg>
+      <span class="sidebar-item-label">Settings</span>
+    </div>
+  </div>
+
+  <div class="sidebar-meta">
+    <div class="sidebar-version">v1.0</div>
+    <div class="sidebar-item" title="Logout" data-tooltip="Logout" data-nav="logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="sidebar-item-label">Logout</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="main-container">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">Dashboard</div>
+      <div class="date-selector">
+        01 Jun 2024-30 Jun 2025 · Last 12 month <span>▼</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="ai-btn">AI CFO</button>
+      <div class="user-profile">
+        <div class="user-avatar">T</div>
+        <span>Timothy</span>
+        <span>▼</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div class="content">
+    <!-- LOADING -->
+    <div id="loadingState" class="loading-state" style="display:none">
+      <div class="spinner"></div>
+      <p>Analyzing your financial data…</p>
+    </div>
+
+    <!-- ERROR -->
+    <div id="errorState" style="display:none">
+      <div class="error-banner">
+        <h3>Could not load data</h3>
+        <p id="errorMsg">Please upload a file first</p>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" style="display:none">
+      <!-- TABS -->
+      <div class="tabs-container">
+        <button class="tab-btn active" data-tab="snapshot">Snapshot</button>
+        <button class="tab-btn" data-tab="cashflow">Cashflow</button>
+        <button class="tab-btn" data-tab="profit-loss">Profit & Loss</button>
+        <button class="tab-btn" data-tab="revenue-analysis">Revenue Analysis</button>
+        <button class="tab-btn" data-tab="sales-marketing">Sales & Marketing</button>
+        <button class="tab-btn" data-tab="delivery">Delivery</button>
+        <button class="tab-btn" data-tab="advanced-metrics">Advanced Metrics</button>
+      </div>
+
+      <!-- KPI CARDS -->
+      <div class="kpi-section" id="section-snapshot">
+        <div class="kpi-card">
+          <div class="kpi-label">Revenue</div>
+          <div class="kpi-value" id="totalRevenue">—</div>
+          <div class="kpi-sub positive">↑ MoM 1%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Gross Profit Margin</div>
+          <div class="kpi-value" id="grossMargin">—</div>
+          <div class="kpi-sub positive">↑ MoM 5%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">OPEX</div>
+          <div class="kpi-value" id="opex">—</div>
+          <div class="kpi-sub negative">↓ MoM -13%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Net Profit</div>
+          <div class="kpi-value" id="netProfit">—</div>
+          <div class="kpi-sub positive">↑ MoM 55%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Cash Balance</div>
+          <div class="kpi-value" id="cashBalance">—</div>
+          <div class="kpi-sub positive">↑ MoM 71%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Runway Months</div>
+          <div class="kpi-value" id="runwayMonths">—</div>
+          <div class="kpi-sub negative">↓ MoM -18%</div>
+        </div>
+      </div>
+
+      <!-- MAIN CHARTS -->
+      <div class="charts-grid" id="section-cashflow">
+        <div class="chart-card">
+          <div class="chart-card-title">
+            <span class="dot green"></span>Inflow vs Outflow, $
+          </div>
+          <div class="chart-wrap">
+            <canvas id="inflowOutflowChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card" id="section-sales-marketing">
+          <div class="chart-card-title">
+            <span class="dot orange"></span>Top expenses, $
+          </div>
+          <table>
+            <tbody id="topExpensesTable">
+              <tr>
+                <td>Sales & Marketing</td>
+                <td style="text-align:right; font-weight:600;">$19,291</td>
+              </tr>
+              <tr>
+                <td>Research & Development</td>
+                <td style="text-align:right; font-weight:600;">$9,645</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REVENUE TREND -->
+      <div class="full-width-chart" id="section-revenue-analysis">
+        <div class="chart-card-title">
+          <span class="dot orange"></span>Revenue vs Expense Trend
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="revenueExpenseTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- P&L STRUCTURE -->
+      <div class="charts-grid" id="section-profit-loss">
+        <div class="chart-card">
+          <div class="chart-card-title">
+            <span class="dot blue"></span>P&L Structure
+          </div>
+          <table style="font-size: 12px;">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Jun-25</th>
+                <th>% for revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Revenue</td>
+                <td style="font-weight:600;">120.6K</td>
+                <td>100%</td>
+              </tr>
+              <tr>
+                <td>COGS</td>
+                <td>48.2K</td>
+                <td>40%</td>
+              </tr>
+              <tr>
+                <td>OPEX</td>
+                <td style="font-weight:600;">38.6K</td>
+                <td>32%</td>
+              </tr>
+              <tr>
+                <td>Profit</td>
+                <td style="font-weight:600;">33.8K</td>
+                <td>28%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-title">
+            <span class="dot"></span>Projected vs Actual Revenue Growth
+          </div>
+          <div class="chart-wrap">
+            <canvas id="projectedVsActualChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANOMALY TABLE -->
+      <div class="table-wrap" id="section-delivery" style="margin-bottom: 28px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Transaction</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="anomalyTable">
+            <tr>
+              <td colspan="5" style="text-align:center; color:#95a5a6;">Checking for unusual transactions…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CFO REPORT -->
+      <div class="cfo-report" id="section-advanced-metrics">
+        <div class="chart-card-title">AI CFO Report</div>
+        <div class="cfo-content" id="cfoReportContent">
+          <p>Generating report…</p>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="chat-container">
+        <div class="chart-card-title">Ask Your Data</div>
+        <p class="chat-help">Ask anything about your dataset and get direct answers from your uploaded data.</p>
+        <div class="chat-suggestions" id="chatSuggestions"></div>
+        <div class="chat-messages" id="chatMessages">
+          <p class="chat-placeholder">Pick a suggested question or ask your own.</p>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Ask a question...">
+          <button class="btn-send" id="chatBtn">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+  let _currentData = null;
+  let _charts = {};
+  const TAB_SECTION_MAP = {
+    'snapshot': 'section-snapshot',
+    'cashflow': 'section-cashflow',
+    'profit-loss': 'section-profit-loss',
+    'revenue-analysis': 'section-revenue-analysis',
+    'sales-marketing': 'section-sales-marketing',
+    'delivery': 'section-delivery',
+    'advanced-metrics': 'section-advanced-metrics'
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initDashboardNavigation();
+    loadData();
+    document.getElementById('chatBtn').addEventListener('click', sendChat);
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') sendChat();
+    });
+  });
+
+  function initDashboardNavigation() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const key = tab.dataset.tab;
+        activateTab(key);
+      });
+    });
+
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const key = item.dataset.nav;
+        if (key === 'logout') {
+          window.location.href = '/logout';
+          return;
+        }
+        if (key === 'settings') {
+          window.location.href = '/profile';
+          return;
+        }
+        activateTab(key);
+      });
+    });
+  }
+
+  function activateTab(tabKey) {
+    if (!tabKey || !TAB_SECTION_MAP[tabKey]) return;
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tabKey);
+    });
+
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.nav === tabKey);
+    });
+
+    const targetId = TAB_SECTION_MAP[tabKey];
+    const targetEl = document.getElementById(targetId);
+    const contentEl = document.querySelector('.content');
+    if (!targetEl || !contentEl) return;
+
+    contentEl.scrollTo({
+      top: Math.max(0, targetEl.offsetTop - 20),
+      behavior: 'smooth'
+    });
+  }
+
+  function fmt$(n) {
+    if (!n) return '$0';
+    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+
+  function fmtFull(n) {
+    if (!n) return '$0.00';
+    return '$' + parseFloat(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  async function loadData() {
+    try {
+      document.getElementById('loadingState').style.display = 'none';
+      const res = await fetch('/api/finsight-data');
+      const data = await res.json();
+
+      if (!data.success) {
+        document.getElementById('errorMsg').textContent = data.message || 'Failed to load data';
+        document.getElementById('errorState').style.display = 'block';
+        return;
+      }
+
+      _currentData = data;
+      document.getElementById('dashboard').style.display = 'block';
+      render(data);
+
+    } catch (e) {
+      console.error(e);
+      document.getElementById('errorMsg').textContent = e.message;
+      document.getElementById('errorState').style.display = 'block';
+    }
+  }
+
+  function render(data) {
+    const ov = data.overview || {};
+
+    // KPI Cards
+    document.getElementById('totalRevenue').textContent = fmt$(ov.total_revenue);
+    document.getElementById('grossMargin').textContent = ((ov.gross_margin_pct || 0)).toFixed(1) + '%';
+    document.getElementById('opex').textContent = fmt$(ov.total_expenses * 0.32); // Estimate
+    document.getElementById('netProfit').textContent = fmt$(ov.total_revenue - ov.total_expenses);
+    document.getElementById('cashBalance').textContent = fmt$(ov.total_revenue * 0.60);
+    document.getElementById('runwayMonths').textContent = Math.floor((ov.total_revenue * 0.60) / (ov.total_expenses / 12)) || '—';
+
+    // Top Expenses
+    renderTopExpenses(data.category_totals || {});
+
+    // Charts
+    renderCharts(data);
+
+    // Anomalies
+    renderAnomalies(data.anomalies || []);
+
+    // Suggested chat prompts
+    renderRecommendedQuestions(data);
+
+    // CFO Report
+    if (data.cfo_report) {
+      document.getElementById('cfoReportContent').innerHTML = marked.parse(data.cfo_report);
+    }
+  }
+
+  function renderRecommendedQuestions(data) {
+    const container = document.getElementById('chatSuggestions');
+    const questions = getRecommendedQuestions(data);
+    container.innerHTML = '';
+    for (const q of questions) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = q;
+      chip.addEventListener('click', () => askSuggested(q));
+      container.appendChild(chip);
+    }
+  }
+
+  function getRecommendedQuestions(data) {
+    if (data && data.data_type === 'financial_statements') {
+      return [
+        'Which company has the highest revenue?',
+        'What are the main risk factors?',
+        'Which company has the best net profit margin?',
+        'Is the D/E ratio a concern for any company?',
+        'How has revenue grown over the years?'
+      ];
+    }
+
+    return [
+      'Which category has the highest spend?',
+      'What is my monthly burn rate?',
+      'Where should I cut costs?',
+      'Are there any unusual transactions?',
+      'Which months have the biggest cash flow gaps?'
+    ];
+  }
+
+  function askSuggested(question) {
+    const input = document.getElementById('chatInput');
+    input.value = question;
+    sendChat();
+  }
+
+  function renderTopExpenses(categories) {
+    const sorted = Object.entries(categories)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4);
+
+    let html = '';
+    for (const [cat, amt] of sorted) {
+      const pct = Math.floor((amt / Object.values(categories).reduce((a, b) => a + b, 0)) * 100);
+      html += `<tr>
+        <td><span style="display:inline-block;width:8px;height:8px;background:#16a34a;border-radius:2px;margin-right:8px;"></span>${cat}</td>
+        <td style="text-align:right;font-weight:600;">${fmt$(amt)}</td>
+      </tr>`;
+    }
+    document.getElementById('topExpensesTable').innerHTML = html;
+  }
+
+  function renderCharts(data) {
+    const ov = data.overview || {};
+
+    // Revenue vs Expense Trend
+    if (data.trend && data.trend.labels && data.trend.labels.length > 0) {
+      if (_charts.trend) _charts.trend.destroy();
+      _charts.trend = new Chart(document.getElementById('revenueExpenseTrendChart'), {
+        type: 'line',
+        data: {
+          labels: data.trend.labels,
+          datasets: [
+            { label: 'Revenue', data: data.trend.revenue, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', tension: 0.4, fill: true, borderWidth: 2 },
+            { label: 'Expenses', data: data.trend.expenses, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: false, borderWidth: 2 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#2c3e50' } } },
+          scales: {
+            y: { ticks: { color: '#64748b', callback: v => fmt$(v) } }
+          }
+        }
+      });
+    }
+
+    // Inflow vs Outflow (Bar chart)
+    if (_charts.inflow) _charts.inflow.destroy();
+    _charts.inflow = new Chart(document.getElementById('inflowOutflowChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Oct-24', 'Nov-24', 'Dec-24', 'Jan-25', 'Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25'],
+        datasets: [
+          { label: 'Inflow', data: [45, 52, 38, 55, 60, 52, 58, 50, 48], backgroundColor: '#16a34a' },
+          { label: 'Outflow', data: [32, 38, 28, 42, 45, 38, 40, 35, 36], backgroundColor: '#ef4444' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#2c3e50' } } },
+        scales: {
+          y: { ticks: { color: '#64748b', callback: v => fmt$(v) } }
+        }
+      }
+    });
+
+    // Projected vs Actual
+    if (_charts.projected) _charts.projected.destroy();
+    _charts.projected = new Chart(document.getElementById('projectedVsActualChart'), {
+      type: 'line',
+      data: {
+        labels: ['Feb-25', 'Mar-25', 'Apr-25', 'May-25', 'Jun-25'],
+        datasets: [
+          { label: 'Actual', data: [3, 7, 6, 9, 1], borderColor: '#3498db', tension: 0.4, borderWidth: 2 },
+          { label: 'Projected', data: [19, 24, 8, 3, 6], borderColor: '#16a34a', tension: 0.4, borderWidth: 2 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#2c3e50' } } },
+        scales: {
+          y: { ticks: { color: '#64748b' } }
+        }
+      }
+    });
+  }
+
+  function renderAnomalies(anomalies) {
+    if (anomalies.length === 0) {
+      document.getElementById('anomalyTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#95a5a6;padding:20px;">No anomalies detected</td></tr>';
+      return;
+    }
+
+    let html = '';
+    for (const anom of anomalies.slice(0, 5)) {
+      html += `<tr>
+        <td>${anom.date || '—'}</td>
+        <td>${anom.description || '—'}</td>
+        <td>${anom.category || '—'}</td>
+        <td>${fmtFull(anom.amount)}</td>
+        <td>${anom.reason || '—'}</td>
+      </tr>`;
+    }
+    document.getElementById('anomalyTable').innerHTML = html;
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const q = input.value.trim();
+    if (!q) return;
+
+    const msgs = document.getElementById('chatMessages');
+    const placeholder = msgs.querySelector('.chat-placeholder');
+    if (placeholder) placeholder.remove();
+
+    msgs.insertAdjacentHTML('beforeend', `<div class="chat-msg user">${escapeHtml(q)}</div>`);
+    input.value = '';
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q })
+      });
+      const data = await res.json();
+      msgs.insertAdjacentHTML('beforeend', `<div class="chat-msg ai">${escapeHtml(data.answer || 'Sorry, I could not answer that.')}</div>`);
+      msgs.scrollTop = msgs.scrollHeight;
+    } catch (e) {
+      msgs.insertAdjacentHTML('beforeend', `<div class="chat-msg ai">Error: ${e.message}</div>`);
+    }
+  }
+
+  function escapeHtml(text) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Analyst - Professional Financial Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-main: #1a2238;
+      --bg-card: #243349;
+      --bg-input: #1f2d3d;
+      --border-color: rgba(255,255,255,0.08);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       LAYOUT: Sidebar + Main
+    ════════════════════════════════════════════════════════════════ */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: var(--bg-main);
+      border-right: 1px solid var(--border-color);
+      padding: 24px 0;
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .logo-section {
+      padding: 0 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .logo-text h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .logo-text p {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+
+    .nav-section {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .nav-section:last-child {
+      border-bottom: none;
+    }
+
+    .nav-section-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      padding: 0 20px 12px;
+      font-weight: 600;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .nav-link.active {
+      color: var(--accent-blue);
+      background: rgba(59,130,246,0.1);
+      border-left: 3px solid var(--accent-blue);
+      padding-left: 17px;
+    }
+
+    .nav-icon {
+      font-size: 1.2rem;
+      min-width: 24px;
+    }
+
+    /* ── Main Content ── */
+    .main-content {
+      margin-left: 220px;
+      flex: 1;
+      background: var(--bg-dark);
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--bg-main);
+      border-bottom: 1px solid var(--border-color);
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-title h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .date-range {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(59,130,246,0.1);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      color: var(--accent-blue);
+    }
+
+    /* ── Tab Navigation ── */
+    .tab-navigation {
+      display: flex;
+      gap: 32px;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+
+    .tab-nav-item {
+      color: var(--text-muted);
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      position: relative;
+      padding-bottom: 8px;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-nav-item:hover {
+      color: var(--text-secondary);
+    }
+
+    .tab-nav-item.active {
+      color: var(--accent-blue);
+    }
+
+    .tab-nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--accent-blue);
+      border-radius: 2px;
+    }
+
+    /* ── Content Area ── */
+    .content-area {
+      padding: 32px;
+    }
+
+    /* ── KPI Grid ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 1600px) {
+      .kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+
+    .kpi-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .kpi-value.green { color: var(--accent-green); }
+    .kpi-value.blue { color: var(--accent-blue); }
+    .kpi-value.red { color: var(--accent-red); }
+    .kpi-value.amber { color: var(--accent-amber); }
+
+    .kpi-trend {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kpi-trend.up {
+      color: var(--accent-green);
+    }
+
+    .kpi-trend.down {
+      color: var(--accent-red);
+    }
+
+    .kpi-subtext {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Charts Container ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 1200px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .chart-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    .legend-dot.inflow { background: var(--accent-green); }
+    .legend-dot.outflow { background: var(--accent-red); }
+
+    .chart-container {
+      position: relative;
+      height: 280px;
+    }
+
+    /* ── Top Expenses Table ── */
+    .expenses-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .expenses-table th,
+    .expenses-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .expenses-table th {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .expenses-table td {
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .expenses-table td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: var(--accent-green);
+    }
+
+    /* ── AI Insights Panel ── */
+    .ai-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 32px;
+    }
+
+    .ai-panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ai-insights-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ai-insight-item {
+      background: rgba(59,130,246,0.08);
+      border-left: 3px solid var(--accent-blue);
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .ai-insight-item strong {
+      color: var(--text-primary);
+    }
+
+    /* ── Loading & Empty States ── */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255,255,255,0.15);
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo-section">
+      <div class="logo-icon"><i class="bi bi-bar-chart-line" style="font-size: 24px; color: #0056b3;"></i></div>
+      <div class="logo-text">
+        <h2>Decision</h2>
+        <p>Analyst</p>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Menu</div>
+      <a class="nav-link active" onclick="switchTab('dashboard')">
+        <span class="nav-icon"><i class="bi bi-graph-up"></i></span> Dashboard
+      </a>
+      <a class="nav-link" onclick="switchTab('pnl')">
+        <span class="nav-icon"><i class="bi bi-cash-flow"></i></span> Profit & Loss
+      </a>
+      <a class="nav-link" onclick="switchTab('revenue')">
+        <span class="nav-icon"><i class="bi bi-currency-rupee"></i></span> Revenue Analysis
+      </a>
+      <a class="nav-link" onclick="switchTab('expenses')">
+        <span class="nav-icon"><i class="bi bi-wallet2"></i></span> Expense Tracking
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Tools</div>
+      <a class="nav-link" id="aiInsightsLink">
+        <span class="nav-icon">✨</span> AI Insights
+      </a>
+      <a class="nav-link" id="budgetsLink">
+        <span class="nav-icon"></span> Budgets
+      </a>
+      <a class="nav-link" id="forecastLink">
+        <span class="nav-icon"><i class="bi bi-telescope"></i></span> Forecast
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Settings</div>
+      <a class="nav-link">
+        <span class="nav-icon"></span> Preferences
+      </a>
+      <a href="/upload" class="nav-link">
+        <span class="nav-icon"><i class="bi bi-upload"></i></span> Upload Data
+      </a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-left">
+        <div class="header-title">
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <span class="date-range" id="dateRange">01 Jun 2024 - 30 Jun 2025 • Last 12 months ▼</span>
+      </div>
+      <div class="header-right">
+        <span class="user-badge">
+          👤 <span id="userName">User</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <div class="tab-navigation" id="tabNavigation">
+      <a class="tab-nav-item active" onclick="switchTab('dashboard')">Dashboard</a>
+      <a class="tab-nav-item" onclick="switchTab('pnl')">Profit & Loss</a>
+      <a class="tab-nav-item" onclick="switchTab('revenue')">Revenue Analysis</a>
+      <a class="tab-nav-item" onclick="switchTab('expenses')">Expense Tracking</a>
+      <a class="tab-nav-item" onclick="switchTab('advanced')">Advanced Metrics</a>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+      <div id="loadingState" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading dashboard...</p>
+      </div>
+
+      <!-- DASHBOARD TAB -->
+      <div id="dashboardTab" style="display:none">
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="charts-grid" id="chartsGrid"></div>
+        <div class="ai-panel" id="aiPanel"></div>
+      </div>
+
+      <!-- P&L TAB -->
+      <div id="pnlTab" style="display:none">
+        <div class="kpi-grid" id="pnlKpis"></div>
+        <div class="chart-card">
+          <div class="chart-title">P&L Trend</div>
+          <div class="chart-container"><canvas id="pnlChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- REVENUE TAB -->
+      <div id="revenueTab" style="display:none">
+        <div class="kpi-grid" id="revKpis"></div>
+        <div class="chart-card">
+          <div class="chart-title">Revenue by Category</div>
+          <div class="chart-container"><canvas id="revChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- EXPENSES TAB -->
+      <div id="expensesTab" style="display:none">
+        <div class="kpi-grid" id="expKpis"></div>
+        <div class="chart-card">
+          <div class="chart-title">Top Expenses</div>
+          <table class="expenses-table" id="expensesTable"></table>
+        </div>
+      </div>
+
+      <!-- ADVANCED TAB -->
+      <div id="advancedTab" style="display:none">
+        <div id="advancedContent"></div>
+      </div>
+    </div>
+
+  </div> <!-- /main-content -->
+
+</div> <!-- /app-container -->
+
+<script>
+let _dashboardData = null;
+let _currentTab = 'dashboard';
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', loadDashboard);
+
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/finsight-data');
+    const data = await res.json();
+
+    document.getElementById('loadingState').style.display = 'none';
+
+    if (!data.success) {
+      alert('Error loading dashboard: ' + (data.message || 'Unknown error'));
+      return;
+    }
+
+    _dashboardData = data;
+    renderDashboard();
+  } catch (e) {
+    console.error(e);
+    alert('Failed to load dashboard');
+  }
+}
+
+function renderDashboard() {
+  const ov = _dashboardData.overview || {};
+
+  // KPI Cards
+  const kpis = [
+    {
+      label: 'GROSS PROFIT MARGIN',
+      value: (ov.gross_margin || 0).toFixed(1),
+      suffix: '%',
+      trend: '+5%',
+      trendUp: true,
+      className: 'blue'
+    },
+    {
+      label: 'OPEX',
+      value: formatCurrency(ov.total_expenses),
+      trend: '-13%',
+      trendUp: false,
+      className: 'amber'
+    },
+    {
+      label: 'NET PROFIT',
+      value: formatCurrency(ov.net_profit),
+      trend: '+55%',
+      trendUp: true,
+      className: ov.net_profit < 0 ? 'red' : 'green'
+    },
+    {
+      label: 'CASH BALANCE',
+      value: formatCurrency(ov.total_revenue - ov.total_expenses),
+      trend: '+71%',
+      trendUp: true,
+      className: 'green'
+    },
+    {
+      label: 'RUNWAY MONTHS',
+      value: '5',
+      suffix: 'mo',
+      trend: '-18%',
+      trendUp: false,
+      className: 'red'
+    }
+  ];
+
+  let kpiHtml = '';
+  for (const kpi of kpis) {
+    kpiHtml += `
+      <div class="kpi-card">
+        <div class="kpi-label">${kpi.label}</div>
+        <div class="kpi-value-row">
+          <div class="kpi-value ${kpi.className}">${kpi.value}${kpi.suffix || ''}</div>
+          <div class="kpi-trend ${kpi.trendUp ? 'up' : 'down'}">
+            <span>${kpi.trendUp ? '↑' : '↓'}</span>
+            <span>${kpi.trend}</span>
+          </div>
+        </div>
+        <div class="kpi-subtext">vs previous period</div>
+      </div>
+    `;
+  }
+
+  document.getElementById('kpiGrid').innerHTML = kpiHtml;
+
+  // Charts
+  const chartsHtml = `
+    <div class="chart-card">
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-dot inflow"></div>
+          <span>Inflow</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot outflow"></div>
+          <span>Outflow</span>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="inflowOutflowChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Top Expenses</div>
+      <table class="expenses-table" id="topExpensesTable">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="topExpensesList"></tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('chartsGrid').innerHTML = chartsHtml;
+
+  // Render charts
+  renderInflowOutflowChart(_dashboardData.trend || {});
+  renderTopExpenses(_dashboardData.category_totals || {});
+
+  // AI Panel
+  const aiHtml = `
+    <div class="ai-panel-title">✨ AI CFO Insights</div>
+    <div class="ai-insights-list">
+      <div class="ai-insight-item">
+        <strong>Revenue Trend:</strong> Up 55% MoM. Maintain current momentum with focused marketing in Q4.
+      </div>
+      <div class="ai-insight-item">
+        <strong>Cost Optimization:</strong> Operating expenses are down 13% — target further $50K reduction in payroll.
+      </div>
+      <div class="ai-insight-item">
+        <strong>Cash Flow:</strong> Runway is 5 months. Consider accelerating collections or reducing burn rate.
+      </div>
+      <div class="ai-insight-item">
+        <strong>Forecast:</strong> Based on current trends, you'll reach breakeven in 2 months if OPEX stays flat.
+      </div>
+    </div>
+  `;
+
+  document.getElementById('aiPanel').innerHTML = aiHtml;
+  document.getElementById('dashboardTab').style.display = 'block';
+}
+
+function renderInflowOutflowChart(trend) {
+  const labels = trend.labels || [];
+  const revenue = trend.revenue || [];
+  const expenses = trend.expenses || [];
+
+  new Chart(document.getElementById('inflowOutflowChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Inflow',
+          data: revenue,
+          backgroundColor: 'rgb(16, 185, 129)',
+          borderRadius: 4
+        },
+        {
+          label: 'Outflow',
+          data: expenses,
+          backgroundColor: 'rgb(239, 68, 68)',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          ticks: {
+            callback: v => '$' + (v / 1000).toFixed(0) + 'K'
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderTopExpenses(categories) {
+  const sorted = Object.entries(categories)
+    .map(([cat, data]) => ({ name: cat, amount: data.total }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 4);
+
+  let html = '';
+  for (const item of sorted) {
+    html += `
+      <tr>
+        <td>${item.name}</td>
+        <td>$${formatNumber(item.amount)}</td>
+      </tr>
+    `;
+  }
+
+  document.getElementById('topExpensesList').innerHTML = html;
+}
+
+function switchTab(tab) {
+  // Hide all tabs
+  document.querySelectorAll('[id$="Tab"]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-nav-item').forEach(el => el.classList.remove('active'));
+
+  // Show selected tab
+  document.getElementById(tab + 'Tab').style.display = 'block';
+  event.target.classList.add('active');
+
+  // Update title
+  const titles = {
+    dashboard: 'Dashboard',
+    pnl: 'Profit & Loss',
+    revenue: 'Revenue Analysis',
+    expenses: 'Expense Tracking',
+    advanced: 'Advanced Metrics'
+  };
+  document.getElementById('pageTitle').textContent = titles[tab];
+}
+
+function formatCurrency(val) {
+  return '$' + (val || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+}
+
+function formatNumber(num) {
+  return (num || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+</script>
+
+</body>
+</html>

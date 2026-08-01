@@ -1,0 +1,801 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Analysis - Decision Analyst{% endblock %}
+
+{% block content %}
+<style>
+    .financial-header {
+        background: linear-gradient(135deg, #0056b3 0%, #003d82 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .financial-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    
+    .financial-table th {
+        background-color: #0056b3;
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid #003d82;
+    }
+    
+    .financial-table td {
+        padding: 10px 12px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .financial-table tbody tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .financial-table tbody tr:hover {
+        background-color: #e7f3ff;
+    }
+    
+    .section-header {
+        background-color: #003d82;
+        color: white;
+        padding: 8px 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .subsection-header {
+        background-color: #e9ecef;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-left: 4px solid #0056b3;
+    }
+    
+    .indent-1 {
+        padding-left: 30px !important;
+    }
+    
+    .indent-2 {
+        padding-left: 50px !important;
+    }
+    
+    .total-row {
+        font-weight: 700;
+        background-color: #f1f3f5 !important;
+        border-top: 2px solid #0056b3 !important;
+    }
+    
+    .amount-positive {
+        color: #28a745;
+    }
+    
+    .amount-negative {
+        color: #dc3545;
+    }
+    
+    .trend-indicator {
+        display: inline-block;
+        width: 60px;
+        height: 20px;
+        background-size: contain;
+        background-repeat: no-repeat;
+    }
+    
+    .view-selector {
+        background: white;
+        border-radius: 5px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .view-btn {
+        margin: 0 5px;
+        padding: 8px 16px;
+        border: 1px solid #0056b3;
+        background: white;
+        color: #0056b3;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .view-btn.active {
+        background: #0056b3;
+        color: white;
+    }
+    
+    .view-btn:hover {
+        background: #003d82;
+        color: white;
+    }
+    
+    .metric-header {
+        text-align: right;
+        font-size: 0.85rem;
+    }
+    
+    .amount-cell {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="financial-header">
+            <h3 class="mb-2"><i class="bi bi-file-earmark-text"></i> Financial Analysis Statement</h3>
+            <p class="mb-0 opacity-75">Comprehensive Transaction Analysis Report</p>
+        </div>
+        
+        <!-- View Selector -->
+        <div class="card-body">
+            <div class="view-selector d-flex align-items-center justify-content-between">
+                <div>
+                    <strong>View By:</strong>
+                    <button class="view-btn active" data-view="month">Month</button>
+                    <button class="view-btn" data-view="quarter">Quarter</button>
+                    <button class="view-btn" data-view="year">Year</button>
+                </div>
+                <div>
+                    <span class="text-muted">Report Date: <strong id="reportDate"></strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Statement Table -->
+    <div class="card border-0 shadow-lg">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="financial-table" id="financialTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 300px;">Account / Description</th>
+                            <th class="metric-header">Current<br>Period</th>
+                            <th class="metric-header" id="period1Header">Period-1</th>
+                            <th class="metric-header" id="period2Header">Period-2</th>
+                            <th class="metric-header" id="period3Header">Period-3</th>
+                            <th class="metric-header" id="period4Header">Period-4</th>
+                            <th class="metric-header" id="period5Header">Period-5</th>
+                            <th class="metric-header">Total</th>
+                            <th class="metric-header">Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statementBody">
+                        <!-- Dynamic content loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mt-4" id="summaryCards">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Total Outflow</h6>
+                    <h3 class="mb-0 amount-negative" id="totalOutflow">₹0.00</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Average / Period</h6>
+                    <h3 class="mb-0 text-primary" id="avgPeriod">₹0.00</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Transaction Count</h6>
+                    <h3 class="mb-0 text-info" id="txnCount">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Period Range</h6>
+                    <h3 class="mb-0 text-secondary" id="periodRange">-</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Highlights -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-shield-check"></i> Audit Highlights</h5>
+        </div>
+        <div class="card-body">
+            <div class="row" id="auditHighlights">
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded h-100">
+                        <p class="mb-1 text-muted">Highest Transaction</p>
+                        <h6 id="highestTxnAmount" class="mb-1">₹0.00</h6>
+                        <small id="highestTxnDesc" class="text-muted">-</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded h-100">
+                        <p class="mb-1 text-muted">Lowest Transaction</p>
+                        <h6 id="lowestTxnAmount" class="mb-1">₹0.00</h6>
+                        <small id="lowestTxnDesc" class="text-muted">-</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded h-100">
+                        <p class="mb-1 text-muted">Most Frequent</p>
+                        <h6 id="mostFrequentTxn" class="mb-1">-</h6>
+                        <small id="mostFrequentCount" class="text-muted">0 transactions</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="p-3 bg-light rounded h-100">
+                        <p class="mb-1 text-muted">Repeated Patterns</p>
+                        <h6 id="repeatedTxnCount" class="mb-1">0</h6>
+                        <small id="repeatedTxnGroups" class="text-muted">0 groups</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-robot"></i> AI Insight Summary</h5>
+        </div>
+        <div class="card-body">
+            <p id="aiSummaryText" class="lead mb-3">Loading AI summary...</p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="bi bi-lightbulb"></i> Recommendations</h6>
+                    <ul id="aiRecommendationsList" class="mb-0"></ul>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="bi bi-exclamation-triangle"></i> Risk Flags / Anomalies</h6>
+                    <ul id="aiAnomaliesList" class="mb-0"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <a href="/upload" class="btn btn-primary btn-lg me-2">
+                <i class="bi bi-cloud-arrow-up"></i> Upload New Data
+            </a>
+            <button class="btn btn-success btn-lg me-2" id="exportStmtBtn">
+                <i class="bi bi-file-earmark-excel"></i> Export CSV
+            </button>
+            <button class="btn btn-danger btn-lg" id="exportPdfBtn">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+let analysisData = null;
+let currentView = 'month';
+
+// Load analysis data
+function loadAnalysis() {
+    $.ajax({
+        url: '/api/get-analysis',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            console.log('Analysis data loaded:', response);
+            if (response.success) {
+                analysisData = response.analysis;
+                console.log('Analysis data:', analysisData);
+                if (!analysisData.monthly_trends) {
+                    console.warn('No monthly_trends in data');
+                    analysisData.monthly_trends = {};
+                }
+                if (!analysisData.category_analysis) {
+                    console.warn('No category_analysis in data');
+                    analysisData.category_analysis = {};
+                }
+                if (!analysisData.summary_statistics) {
+                    analysisData.summary_statistics = {};
+                }
+                renderStatement();
+                updateSummaryCards();
+                updateAuditHighlights();
+                updateAIInsights();
+            } else {
+                alert('Error: ' + response.message);
+                console.error('API error:', response);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX error:', xhr, status, error);
+            alert('Failed to load analysis: ' + error + '\nStatus: ' + xhr.status);
+        }
+    });
+}
+
+// Render financial statement
+function renderStatement() {
+    if (!analysisData) {
+        console.error('No analysis data');
+        return;
+    }
+
+    console.log('Full analysisData:', analysisData);
+    console.log('monthly_trends:', analysisData.monthly_trends);
+    console.log('category_analysis:', analysisData.category_analysis);
+    console.log('category_period_trends:', analysisData.category_period_trends);
+    
+    // Store reference for PDF export
+    window.lastRenderedTableHTML = null;
+
+    const groupedSeries = getGroupedSeries(currentView);
+    const categorySeries = getGroupedCategorySeries(currentView);
+    const categories = analysisData.category_analysis || {};
+    const periods = Object.keys(groupedSeries).sort().slice(-6);
+
+    console.log('groupedSeries:', groupedSeries);
+    console.log('categorySeries:', categorySeries);
+    console.log('Rendering statement with periods:', periods);
+    console.log('Categories:', categories);
+
+    if (periods.length === 0) {
+        $('#statementBody').html('<tr><td colspan="9" class="text-center text-muted py-4">No data available. Please upload a file first.</td></tr>');
+        return;
+    }
+
+    updatePeriodHeaders(periods);
+    
+    let html = '';
+    
+    // SPENDING SECTION
+    html += `<tr class="section-header"><td colspan="9">SPENDING BREAKDOWN</td></tr>`;
+    
+    // Categories
+    const sortedCategories = Object.entries(categories).sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
+    
+    if (sortedCategories.length === 0) {
+        html += `<tr><td colspan="9" class="text-center text-muted">No category data</td></tr>`;
+    } else {
+        sortedCategories.forEach(([category, data]) => {
+            const periodAmounts = periods.map(period => (categorySeries[category] && categorySeries[category][period]) ? categorySeries[category][period] : 0);
+            const trend = calculateTrend(periodAmounts);
+            
+            html += `<tr>`;
+            html += `<td class="indent-1">${category}</td>`;
+            html += `<td class="amount-cell">${formatCurrency(periodAmounts[periodAmounts.length - 1] || 0)}</td>`;
+            
+            for (let i = periodAmounts.length - 2; i >= Math.max(0, periodAmounts.length - 6); i--) {
+                html += `<td class="amount-cell">${formatCurrency(periodAmounts[i] || 0)}</td>`;
+            }
+            
+            // Pad if less than 6 periods
+            for (let i = periodAmounts.length; i < 6; i++) {
+                html += `<td class="amount-cell">-</td>`;
+            }
+            
+            html += `<td class="amount-cell"><strong>${formatCurrency(data.total)}</strong></td>`;
+            html += `<td class="amount-cell">${getTrendSymbol(trend)}</td>`;
+            html += `</tr>`;
+        });
+    }
+    
+    // TOTAL SPENDING
+    const totalByPeriod = periods.map(period => groupedSeries[period] ? groupedSeries[period].total : 0);
+    const totalTrend = calculateTrend(totalByPeriod);
+    
+    html += `<tr class="total-row">`;
+    html += `<td><strong>TOTAL SPENDING</strong></td>`;
+    html += `<td class="amount-cell"><strong>${formatCurrency(totalByPeriod[totalByPeriod.length - 1] || 0)}</strong></td>`;
+    
+    for (let i = totalByPeriod.length - 2; i >= Math.max(0, totalByPeriod.length - 6); i--) {
+        html += `<td class="amount-cell"><strong>${formatCurrency(totalByPeriod[i] || 0)}</strong></td>`;
+    }
+    
+    for (let i = totalByPeriod.length; i < 6; i++) {
+        html += `<td class="amount-cell">-</td>`;
+    }
+    
+    html += `<td class="amount-cell"><strong>${formatCurrency((analysisData.summary_statistics || {}).total_spent || 0)}</strong></td>`;
+    html += `<td class="amount-cell">${getTrendSymbol(totalTrend)}</td>`;
+    html += `</tr>`;
+    
+    // TRANSACTION METRICS
+    html += `<tr class="section-header"><td colspan="9">TRANSACTION METRICS</td></tr>`;
+    
+    const txnByPeriod = periods.map(period => groupedSeries[period] ? groupedSeries[period].count : 0);
+    html += `<tr>`;
+    html += `<td class="indent-1">Transaction Count</td>`;
+    html += `<td class="amount-cell">${txnByPeriod[txnByPeriod.length - 1] || 0}</td>`;
+    
+    for (let i = txnByPeriod.length - 2; i >= Math.max(0, txnByPeriod.length - 6); i--) {
+        html += `<td class="amount-cell">${txnByPeriod[i] || 0}</td>`;
+    }
+    
+    for (let i = txnByPeriod.length; i < 6; i++) {
+        html += `<td class="amount-cell">-</td>`;
+    }
+    
+    html += `<td class="amount-cell"><strong>${((analysisData.summary_statistics || {}).total_transactions || 0).toLocaleString()}</strong></td>`;
+    html += `<td class="amount-cell">-</td>`;
+    html += `</tr>`;
+    
+    // Average Transaction
+    const avgByPeriod = totalByPeriod.map((total, idx) => 
+        txnByPeriod[idx] > 0 ? total / txnByPeriod[idx] : 0
+    );
+    
+    html += `<tr>`;
+    html += `<td class="indent-1">Average Transaction Size</td>`;
+    html += `<td class="amount-cell">${formatCurrency(avgByPeriod[avgByPeriod.length - 1] || 0)}</td>`;
+    
+    for (let i = avgByPeriod.length - 2; i >= Math.max(0, avgByPeriod.length - 6); i--) {
+        html += `<td class="amount-cell">${formatCurrency(avgByPeriod[i] || 0)}</td>`;
+    }
+    
+    for (let i = avgByPeriod.length; i < 6; i++) {
+        html += `<td class="amount-cell">-</td>`;
+    }
+    
+    html += `<td class="amount-cell"><strong>${formatCurrency(((analysisData.summary_statistics || {}).average_transaction || 0))}</strong></td>`;
+    html += `<td class="amount-cell">-</td>`;
+    html += `</tr>`;
+    
+    $('#statementBody').html(html);
+}
+
+function updatePeriodHeaders(periods) {
+    const previous = periods.slice(0, -1).reverse();
+    for (let i = 1; i <= 5; i++) {
+        $(`#period${i}Header`).text(previous[i - 1] || '-');
+    }
+}
+
+function getGroupedSeries(view) {
+    const monthly = analysisData.monthly_trends || {};
+    if (view === 'month') return monthly;
+
+    const grouped = {};
+    Object.entries(monthly).forEach(([month, values]) => {
+        const [year, mon] = month.split('-');
+        const key = view === 'quarter' ? `${year}-Q${Math.ceil(parseInt(mon, 10) / 3)}` : year;
+
+        if (!grouped[key]) {
+            grouped[key] = { total: 0, count: 0, average: 0 };
+        }
+        grouped[key].total += values.total || 0;
+        grouped[key].count += values.count || 0;
+    });
+
+    Object.keys(grouped).forEach(key => {
+        grouped[key].average = grouped[key].count ? grouped[key].total / grouped[key].count : 0;
+    });
+
+    return grouped;
+}
+
+function getGroupedCategorySeries(view) {
+    const monthlyCategory = analysisData.category_period_trends || {};
+    console.log('monthlyCategory raw data:', monthlyCategory);
+    
+    if (view === 'month') return monthlyCategory;
+
+    const grouped = {};
+    Object.entries(monthlyCategory).forEach(([category, series]) => {
+        grouped[category] = {};
+        if (series && typeof series === 'object') {
+            Object.entries(series).forEach(([month, value]) => {
+                const parts = month.split('-');
+                if (parts.length >= 2) {
+                    const year = parts[0];
+                    const mon = parts[1];
+                    const key = view === 'quarter' ? `${year}-Q${Math.ceil(parseInt(mon, 10) / 3)}` : year;
+                    grouped[category][key] = (grouped[category][key] || 0) + (value || 0);
+                }
+            });
+        }
+    });
+
+    return grouped;
+}
+
+function calculateTrend(values) {
+    const valid = values.filter(v => Number.isFinite(v));
+    if (valid.length < 2) return 0;
+    const recent = valid.slice(-3);
+    const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const first = recent[0] || 0;
+    if (first === 0) return 0;
+    return ((avg - first) / first) * 100;
+}
+
+function getTrendSymbol(trend) {
+    if (trend > 5) return '<span class="text-danger">▲</span>';
+    if (trend < -5) return '<span class="text-success">▼</span>';
+    return '<span class="text-muted">─</span>';
+}
+
+function formatCurrency(amount) {
+    if (typeof amount !== 'number') return '₹0.00';
+    return '₹' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+}
+
+function updateSummaryCards() {
+    if (!analysisData) return;
+    const stats = analysisData.summary_statistics || {};
+    const periods = Object.keys(getGroupedSeries(currentView));
+    
+    const totalSpent = stats.total_spent || 0;
+    const totalTransactions = stats.total_transactions || 0;
+    $('#totalOutflow').text(formatCurrency(totalSpent));
+    $('#avgPeriod').text(formatCurrency(totalSpent / Math.max(periods.length, 1)));
+    $('#txnCount').text(totalTransactions.toLocaleString());
+    $('#periodRange').text(periods.length || '0');
+    $('#reportDate').text(new Date().toLocaleDateString());
+}
+
+function updateAuditHighlights() {
+    const audit = analysisData.audit_metrics || {};
+    const highest = audit.highest_transaction || {};
+    const lowest = audit.lowest_transaction || {};
+    const frequent = audit.most_frequent_transaction || {};
+    const repeated = audit.repeated_transactions || {};
+
+    $('#highestTxnAmount').text(formatCurrency(highest.amount || 0));
+    $('#highestTxnDesc').text(highest.description || '-');
+    $('#lowestTxnAmount').text(formatCurrency(lowest.amount || 0));
+    $('#lowestTxnDesc').text(lowest.description || '-');
+
+    $('#mostFrequentTxn').text(frequent.description || '-');
+    $('#mostFrequentCount').text(`${frequent.count || 0} transactions`);
+
+    $('#repeatedTxnCount').text((repeated.count || 0).toLocaleString());
+    $('#repeatedTxnGroups').text(`${repeated.groups || 0} groups`);
+}
+
+function updateAIInsights() {
+    const ai = analysisData.ai_insights || {};
+    $('#aiSummaryText').text(ai.summary || 'AI summary is not available for this dataset yet.');
+
+    const recommendations = ai.recommendations || [];
+    const anomalies = ai.anomalies || [];
+
+    $('#aiRecommendationsList').html(
+        recommendations.length
+            ? recommendations.map(item => `<li class="mb-1">${item}</li>`).join('')
+            : '<li class="text-muted">No recommendations available.</li>'
+    );
+
+    $('#aiAnomaliesList').html(
+        anomalies.length
+            ? anomalies.map(item => `<li class="mb-1">${item}</li>`).join('')
+            : '<li class="text-muted">No anomalies detected.</li>'
+    );
+}
+
+// View switcher
+$('.view-btn').on('click', function() {
+    $('.view-btn').removeClass('active');
+    $(this).addClass('active');
+    currentView = $(this).data('view');
+    renderStatement();
+    updateSummaryCards();
+});
+
+// Initialize
+$(document).ready(function() {
+    loadAnalysis();
+    
+    // Export CSV button handler
+    $('#exportStmtBtn').click(function() {
+        exportTableToCSV('financialTable', 'financial-statement.csv');
+    });
+    
+    // Export PDF button handler - Call server endpoint
+    $('#exportPdfBtn').click(function() {
+        console.log('PDF export button clicked - calling server endpoint...');
+        
+        $.ajax({
+            url: '/api/export-pdf',
+            type: 'GET',
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data, status, xhr) {
+                console.log('✓ PDF received from server');
+                // Create download link
+                const link = document.createElement('a');
+                const url = window.URL.createObjectURL(new Blob([data]));
+                link.href = url;
+                link.setAttribute('download', `Decision-Analyst-Report-${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.parentNode.removeChild(link);
+                console.log('✓✓✓ PDF DOWNLOADED SUCCESSFULLY ✓✓✓');
+            },
+            error: function(xhr, status, error) {
+                console.error('[Error] PDF download failed:', error);
+                alert('Error generating PDF: ' + (xhr.responseJSON?.message || error));
+            }
+        });
+    });
+});
+
+function generateComprehensivePDF() {
+    if (!analysisData) {
+        alert('No data available. Please load analysis first.');
+        return;
+    }
+    
+    console.log('✓ Starting simplified PDF export...');
+    
+    try {
+        // Instead of creating fake HTML, let's capture the ACTUAL visible content on the page
+        // Create wrapper with ALL the key sections already visible on screen
+        
+        const stats = analysisData.summary_statistics || {};
+        
+        // Build a simple but effective PDF structure using the real table
+        const pdfElements = document.createElement('div');
+        pdfElements.id = 'pdf-export-final';
+        pdfElements.style.width = '210mm';
+        pdfElements.style.padding = '20px';
+        pdfElements.style.backgroundColor = '#ffffff';
+        pdfElements.style.color = '#1f2937';
+        pdfElements.style.fontFamily = "Arial, sans-serif";
+        pdfElements.style.fontSize = '12px';
+        pdfElements.style.lineHeight = '1.5';
+        
+        // Header
+        let html = '<div style="border-bottom: 3px solid #0056b3; padding-bottom: 15px; margin-bottom: 15px;">';
+        html += '<h1 style="color: #0056b3; font-size: 24px; margin: 0 0 5px 0;">Decision Analyst</h1>';
+        html += '<p style="color: #6b7280; font-size: 11px; margin: 0; text-transform: uppercase;">Smart Finance Auditor</p>';
+        html += '<p style="color: #6b7280; font-size: 10px; margin: 5px 0 0 0;">Financial Analysis Report</p>';
+        html += '</div>';
+        
+        // Stats Cards
+        html += '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;"><';
+        html += '<div style="border: 1px solid #e5e7eb; padding: 10px; border-radius: 4px;">';
+        html += '<div style="font-weight: bold; color: #0056b3;">Total Spending</div>';
+        html += '<div style="font-size: 14px; font-weight: bold; color: #10b981;">₹' + (stats.total_spent || 0).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + '</div>';
+        html += '</div>';
+        
+        html += '<div style="border: 1px solid #e5e7eb; padding: 10px; border-radius: 4px;">';
+        html += '<div style="font-weight: bold; color: #0056b3;">Transactions</div>';
+        html += '<div style="font-size: 14px; font-weight: bold;">' + (stats.total_transactions || 0).toLocaleString() + '</div>';
+        html += '</div>';
+        
+        html += '<div style="border: 1px solid #e5e7eb; padding: 10px; border-radius: 4px;">';
+        html += '<div style="font-weight: bold; color: #0056b3;">Avg. Transaction</div>';
+        html += '<div style="font-size: 14px; font-weight: bold;">₹' + (stats.average_transaction || 0).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + '</div>';
+        html += '</div>';
+        
+        html += '<div style="border: 1px solid #e5e7eb; padding: 10px; border-radius: 4px;">';
+        html += '<div style="font-weight: bold; color: #0056b3;">Periods</div>';
+        html += '<div style="font-size: 14px; font-weight: bold;">' + Object.keys(analysisData.monthly_trends || {}).length + '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Financial Table Section
+        html += '<h2 style="font-size: 14px; font-weight: bold; color: white; background: #0056b3; padding: 8px; margin: 15px 0 10px 0; border-radius: 4px;"><i class="bi bi-graph-up" style="color: white; margin-right: 6px;"></i>Financial Statement</h2>';
+        
+        // Get the actual table from the page
+        const actualTable = document.getElementById('financialTable');
+        if (actualTable) {
+            html += actualTable.outerHTML;
+        } else {
+            html += '<p>Table not available</p>';
+        }
+        
+        // AI Insights Section
+        html += '<h2 style="font-size: 14px; font-weight: bold; color: white; background: #0056b3; padding: 8px; margin: 15px 0 10px 0; border-radius: 4px;"><i class="bi bi-robot" style="color: white; margin-right: 6px;"></i>AI Insights</h2>';
+        const aiSummary = document.getElementById('aiSummaryText')?.textContent || 'No summary';
+        html += '<div style="background: #f0f7ff; padding: 10px; border-left: 3px solid #0056b3; border-radius: 4px;"><strong>' + aiSummary + '</strong></div>';
+        
+        // Recommendations
+        html += '<h2 style="font-size: 14px; font-weight: bold; color: white; background: #0056b3; padding: 8px; margin: 15px 0 10px 0; border-radius: 4px;"><i class="bi bi-lightbulb" style="color: white; margin-right: 6px;"></i>Recommendations</h2>';
+        const recList = document.getElementById('aiRecommendationsList');
+        if (recList) {
+            html += '<ul style="margin: 0; padding-left: 20px;">';
+            for (let li of recList.querySelectorAll('li')) {
+                html += '<li style="margin-bottom: 5px;">' + li.textContent + '</li>';
+            }
+            html += '</ul>';
+        }
+        
+        // Anomalies
+        html += '<h2 style="font-size: 14px; font-weight: bold; color: white; background: #0056b3; padding: 8px; margin: 15px 0 10px 0; border-radius: 4px;"><i class="bi bi-exclamation-triangle" style="color: white; margin-right: 6px;"></i>Anomalies</h2>';
+        const anomList = document.getElementById('aiAnomaliesList');
+        if (anomList) {
+            html += '<ul style="margin: 0; padding-left: 20px;">';
+            for (let li of anomList.querySelectorAll('li')) {
+                html += '<li style="margin-bottom: 5px;">' + li.textContent + '</li>';
+            }
+            html += '</ul>';
+        }
+        
+        // Footer
+        html += '<div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9ca3af; text-align: center;">';
+        html += '<p>© 2025-2026 Decision Analyst. All rights reserved.</p>';
+        html += '</div>';
+        
+        pdfElements.innerHTML = html;
+        
+        console.log('✓ PDF content assembled');
+        console.log('Content length:', pdfElements.innerHTML.length);
+        console.log('Table found:', !!actualTable);
+        
+        // Add to page temporarily
+        document.body.appendChild(pdfElements);
+        console.log('✓ Content added to DOM');
+        
+        // Give browser time to render
+        setTimeout(() => {
+            try {
+                console.log('✓ Calling html2pdf with logging enabled...');
+                
+                const opts = {
+                    margin: 5,
+                    filename: 'Decision-Analyst-Report-' + new Date().toLocaleDateString().replace(/\//g, '-') + '.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        logging: true,  // Enable detailed logging
+                        useCORS: true,
+                        windowHeight: 2000
+                    },
+                    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+                    pagebreak: { mode: 'avoid-all' }
+                };
+                
+                html2pdf()
+                    .set(opts)
+                    .from(pdfElements)
+                    .save()
+                    .then(() => {
+                        console.log('✓✓✓ PDF SAVED - Check your downloads! ✓✓✓');
+                        if (document.body.contains(pdfElements)) {
+                            document.body.removeChild(pdfElements);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('[Error] PDF SAVE FAILED:', err);
+                        if (document.body.contains(pdfElements)) {
+                            document.body.removeChild(pdfElements);
+                        }
+                    });
+                    
+            } catch (e) {
+                console.error('[Error] Error during PDF generation:', e);
+                if (document.body.contains(pdfElements)) {
+                    document.body.removeChild(pdfElements);
+                }
+            }
+        }, 200);
+        
+    } catch (e) {
+        console.error('[Error] Fatal error:', e);
+        alert('Error: ' + e.message);
+    }
+}
+</script>
+{% endblock %}

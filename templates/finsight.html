@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Analyst - Smart Finance Auditor</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg:       #ffffff;
+      --card:     #f8fbff;
+      --card2:    #f0f7ff;
+      --border:   rgba(0,86,179,0.12);
+      --accent:   #0056b3;
+      --accent2:  #00a8ff;
+      --warn:     #ff9800;
+      --danger:   #f44336;
+      --success:  #4caf50;
+      --text:     #1f2937;
+      --muted:    #6b7280;
+      --sub:      #9ca3af;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 32px; border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,0.96); backdrop-filter:blur(12px);
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { display:flex; align-items:center; gap:14px; }
+    .logo-icon {
+      width:42px; height:42px; border-radius:10px;
+      background:linear-gradient(135deg,#10b981,#0056b3);
+      display:flex; align-items:center; justify-content:center; font-size:20px;
+    }
+    .logo-icon img {
+      width:26px;
+      height:26px;
+      object-fit:contain;
+      display:block;
+    }
+    .logo-text h1 { font-size:1.2rem; font-weight:700; letter-spacing:-.4px; }
+    .logo-text p  { font-size:.6rem; color:var(--muted); letter-spacing:2.5px; margin-top:2px; }
+    .file-badge {
+      display:flex; align-items:center; gap:7px;
+      background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3);
+      border-radius:20px; padding:5px 14px; font-size:.78rem; color:var(--accent);
+    }
+    .nav-links { display:flex; gap:18px; align-items:center; }
+    .nav-links a { color:var(--sub); text-decoration:none; font-size:.82rem; transition:color .2s; }
+    .nav-links a:hover { color:var(--text); }
+
+    /* ── Main layout ── */
+    .main { max-width:1340px; margin:0 auto; padding:28px 24px 64px; }
+
+    /* ── States ── */
+    .loading-state {
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; min-height:60vh; gap:16px;
+    }
+    .spinner {
+      width:42px; height:42px; border:3px solid var(--border);
+      border-top-color:var(--accent); border-radius:50%;
+      animation:spin .85s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .error-banner {
+      background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+      border-radius:12px; padding:20px 24px; color:#fca5a5;
+      text-align:center; margin:40px auto; max-width:520px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:22px 24px; margin-bottom:20px;
+    }
+    .section-title {
+      display:flex; align-items:center; gap:9px;
+      font-size:.7rem; letter-spacing:2px; text-transform:uppercase;
+      font-weight:600; color:var(--text); margin-bottom:18px;
+    }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+    .dot.blue   { background:var(--accent2); }
+    .dot.orange { background:#fb923c; }
+    .dot.red    { background:var(--danger); }
+    .dot.warn   { background:var(--warn); }
+
+    /* ── KPI Grid ── */
+    .kpi-grid {
+      display:grid; gap:14px; margin-bottom:20px;
+    }
+    .kpi-grid-4 { grid-template-columns:repeat(4,1fr); }
+    .kpi-grid-5 { grid-template-columns:repeat(5,1fr); }
+    .kpi-grid-2 { grid-template-columns:repeat(4,1fr); }
+    @media(max-width:960px) { .kpi-grid-4,.kpi-grid-5,.kpi-grid-2 { grid-template-columns:repeat(2,1fr); } }
+    @media(max-width:520px) { .kpi-grid-4,.kpi-grid-5,.kpi-grid-2 { grid-template-columns:1fr; } }
+
+    .kpi-card {
+      background:var(--card); border:1px solid var(--border); border-radius:14px;
+      padding:20px 22px; transition:border-color .2s, transform .15s;
+    }
+    .kpi-card:hover { border-color:rgba(0,86,179,.24); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,86,179,.08); }
+    .kpi-label { font-size:.68rem; letter-spacing:1.4px; color:var(--muted); text-transform:uppercase; margin-bottom:9px; }
+    .kpi-value { font-size:1.75rem; font-weight:700; letter-spacing:-1px; line-height:1; }
+    .kpi-value.green  { color:#10b981; }
+    .kpi-value.blue   { color:#0056b3; }
+    .kpi-value.red    { color:#dc2626; }
+    .kpi-value.warn   { color:#f59e0b; }
+    .kpi-value.neutral{ color:var(--sub); }
+    .kpi-sub { font-size:.72rem; color:var(--muted); margin-top:7px; display:flex; align-items:center; gap:5px; }
+
+    /* Risk badge */
+    .risk-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      border-radius:20px; padding:3px 12px; font-size:.72rem; font-weight:700; letter-spacing:.5px;
+    }
+    .risk-badge.low    { background:rgba(16,185,129,.12); color:#10b981; border:1px solid rgba(16,185,129,.3); }
+    .risk-badge.medium { background:rgba(245,158,11,.12); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+    .risk-badge.high   { background:rgba(239,68,68,.12); color:#dc2626; border:1px solid rgba(239,68,68,.3); }
+    .risk-badge.critical { background:#fecaca; color:#7f1d1d; border:1px solid #f87171; }
+
+    .kpi-card.risk-card.low { border-color:rgba(16,185,129,.22); }
+    .kpi-card.risk-card.medium { border-color:rgba(245,158,11,.24); }
+    .kpi-card.risk-card.high { border-color:rgba(239,68,68,.24); }
+    .kpi-card.risk-card.critical { border-color:#f87171; box-shadow:0 0 0 1px rgba(239,68,68,.22) inset; }
+
+    .table-wrap {
+      overflow-x:auto;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#ffffff;
+    }
+    .dark-table {
+      width:100%; border-collapse:collapse; min-width:720px;
+    }
+    .dark-table th,
+    .dark-table td {
+      padding:14px 16px; text-align:left; border-bottom:1px solid var(--border);
+      font-size:.82rem;
+    }
+    .dark-table th {
+      color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; font-size:.68rem;
+      background:#f8fbff;
+    }
+    .dark-table td { color:var(--text); vertical-align:top; }
+    .dark-table tr:last-child td { border-bottom:none; }
+    .dark-table .amount-cell { font-weight:600; white-space:nowrap; }
+    .dark-table .reason-cell { color:var(--sub); }
+    .flagged-row:hover { background:#f0f7ff; }
+    .flag-detail {
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .info-tip {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:18px; height:18px; border-radius:50%; border:1px solid rgba(0,168,255,.3);
+      color:#00a8ff; font-size:.72rem; cursor:help; flex-shrink:0;
+      background:rgba(0,168,255,.08);
+    }
+    .empty-state-row td {
+      color:var(--muted); text-align:center; padding:24px 16px;
+    }
+
+    /* ── Chart grids ── */
+    .chart-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+    .chart-row-3 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+    @media(max-width:800px) { .chart-row-2,.chart-row-3 { grid-template-columns:1fr; } }
+
+    .chart-wrap        { position:relative; height:240px; }
+    .chart-wrap-md     { position:relative; height:280px; }
+    .chart-wrap-tall   { position:relative; height:320px; }
+
+    /* ── Risk flags panel ── */
+    .risk-flags { display:flex; flex-direction:column; gap:9px; margin-bottom:20px; }
+    .risk-flag-item {
+      display:flex; align-items:flex-start; gap:10px;
+      background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.2);
+      border-radius:10px; padding:11px 14px; font-size:.83rem; color:#dc2626;
+    }
+    .risk-flag-item .flag-icon { font-size:1rem; flex-shrink:0; margin-top:1px; }
+    .no-risk-flag {
+      display:flex; align-items:center; gap:8px;
+      background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.2);
+      border-radius:10px; padding:11px 14px; font-size:.83rem; color:#10b981;
+    }
+
+    /* ── CFO Report ── */
+    .cfo-content { line-height:1.78; color:var(--sub); font-size:.9rem; }
+    .cfo-content h2 { color:var(--text); font-size:1.05rem; margin-bottom:10px; }
+    .cfo-content h3 { color:var(--text); font-size:.95rem; margin:12px 0 7px; }
+    .cfo-content strong { color:var(--text); font-weight:600; }
+    .cfo-content p  { margin-bottom:9px; }
+    .cfo-content ul,.cfo-content ol { padding-left:18px; margin-bottom:9px; }
+
+    /* ── Budget Progress Bar ── */
+    .budget-item {
+      display:flex; flex-direction:column; gap:8px;
+      background:#f8fbff; border:1px solid var(--border);
+      border-radius:10px; padding:14px; margin-bottom:10px;
+    }
+    .budget-header {
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:.85rem;
+    }
+    .budget-category { color:var(--text); font-weight:600; }
+    .budget-amount { color:var(--sub); font-size:.78rem; }
+    .budget-progress-bar {
+      height:8px; background:rgba(255,255,255,.1); border-radius:4px;
+      overflow:hidden;
+    }
+    .budget-progress-fill {
+      height:100%; border-radius:4px;
+      background:linear-gradient(90deg, #10b981, #0056b3);
+      transition:width .3s ease;
+    }
+    .budget-progress-fill.warning {
+      background:linear-gradient(90deg, #fbbf24, #fb923c);
+    }
+    .budget-progress-fill.critical {
+      background:linear-gradient(90deg, #ff6b6b, #f472b6);
+    }
+    .budget-footer {
+      display:flex; justify-content:space-between;
+      font-size:.75rem; color:var(--muted);
+    }
+
+    /* ── Recurring Transactions ── */
+    .recurring-item {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:12px 14px; background:rgba(255,255,255,.02);
+      border:1px solid var(--border); border-radius:8px; margin-bottom:8px;
+      font-size:.83rem;
+    }
+    .recurring-info { flex:1; }
+    .recurring-name { color:var(--text); font-weight:600; }
+    .recurring-meta { color:var(--muted); font-size:.75rem; margin-top:2px; }
+    .recurring-amount { color:var(--accent2); font-weight:600; min-width:100px; text-align:right; }
+    .confidence-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:rgba(16,185,129,.1); color:var(--accent);
+      border-radius:6px; padding:2px 8px; font-size:.7rem; font-weight:600;
+    }
+    .cfo-content li { margin-bottom:3px; }
+
+    /* ── Chat ── */
+    .chat-messages { min-height:56px; margin-bottom:14px; display:flex; flex-direction:column; gap:10px; }
+    .chat-msg { border-radius:10px; padding:11px 15px; font-size:.86rem; max-width:88%; line-height:1.6; }
+    .chat-msg.user   { background:rgba(0,168,255,.1); border:1px solid rgba(0,168,255,.2); align-self:flex-end; color:var(--accent2); }
+    .chat-msg.ai     { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.15); align-self:flex-start; color:var(--text); }
+    .chat-msg.loading{ color:var(--muted); font-style:italic; }
+    .chat-placeholder{ color:var(--muted); font-size:.83rem; }
+    .chat-suggestions{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px; }
+    .chip {
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:20px; padding:5px 12px; font-size:.76rem;
+      color:var(--sub); cursor:pointer; transition:all .2s;
+    }
+    .chip:hover { background:rgba(16,185,129,.08); border-color:rgba(16,185,129,.3); color:var(--accent); }
+    .chat-input-row { display:flex; gap:10px; }
+    .chat-input {
+      flex:1; background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:10px; padding:11px 16px; color:var(--text); font-size:.86rem;
+      outline:none; transition:border-color .2s;
+    }
+    .chat-input::placeholder { color:var(--muted); }
+    .chat-input:focus { border-color:rgba(0,168,255,.4); }
+    .btn-send {
+      background:var(--accent); color:#0a0f1e; border:none;
+      border-radius:10px; padding:11px 22px; font-weight:700; font-size:.86rem;
+      cursor:pointer; transition:opacity .2s; white-space:nowrap;
+    }
+    .btn-send:hover    { opacity:.85; }
+    .btn-send:disabled { opacity:.45; cursor:not-allowed; }
+
+    .upload-btn-wrap { text-align:center; margin-top:28px; }
+    .btn-ghost {
+      background:transparent; border:1px solid var(--border); color:var(--sub);
+      border-radius:10px; padding:10px 26px; font-size:.84rem; cursor:pointer;
+      transition:all .2s; text-decoration:none; display:inline-block;
+    }
+    .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ── Divider ── */
+    .divider { border:none; border-top:1px solid var(--border); margin:4px 0 20px; }
+
+    /* ── Light analytics style for transaction mode ── */
+    body.txn-analytics {
+      --bg:#ffffff;
+      --card:#f8fbff;
+      --card2:#f0f7ff;
+      --border:rgba(0,86,179,.12);
+      --accent:#10b981;
+      --accent2:#0056b3;
+      --warn:#f59e0b;
+      --danger:#dc2626;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --sub:#9ca3af;
+      background:var(--bg);
+      color:var(--text);
+    }
+    body.txn-analytics .header {
+      background:#ffffff;
+      border-bottom:1px solid rgba(0,86,179,.12);
+      backdrop-filter:blur(12px);
+    }
+    body.txn-analytics .logo-text h1 { color:#0056b3; }
+    body.txn-analytics .logo-text p { color:var(--muted); }
+    body.txn-analytics .nav-links a { color:var(--text); }
+    body.txn-analytics .nav-links a:hover { color:#0056b3; }
+    body.txn-analytics .file-badge {
+      background:rgba(16,185,129,.12);
+      border:1px solid rgba(16,185,129,.3);
+      color:#10b981;
+    }
+    body.txn-analytics .main { max-width:1400px; }
+
+    body.txn-analytics #txnDashboard .kpi-card,
+    body.txn-analytics #txnDashboard .card {
+      background:var(--card);
+      border:1px solid var(--border);
+      box-shadow:0 2px 8px rgba(0,86,179,.06);
+    }
+    body.txn-analytics #txnDashboard .kpi-card:hover {
+      border-color:rgba(0,86,179,.24);
+      box-shadow:0 4px 12px rgba(0,86,179,.12);
+    }
+    body.txn-analytics #txnDashboard .kpi-label {
+      color:var(--muted);
+      letter-spacing:1.2px;
+    }
+    body.txn-analytics #txnDashboard .kpi-sub {
+      color:var(--muted);
+    }
+    body.txn-analytics #txnDashboard .section-title {
+      color:var(--text);
+    }
+    body.txn-analytics #txnDashboard .dot { background:#10b981; }
+    body.txn-analytics #txnDashboard .dot.blue { background:#0056b3; }
+    body.txn-analytics #txnDashboard .dot.orange { background:#f59e0b; }
+    body.txn-analytics #txnDashboard .dot.red { background:#dc2626; }
+
+    body.txn-analytics #txnRevenueCard { background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.3); }
+    body.txn-analytics #txnExpenseCard { background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.3); }
+    body.txn-analytics #txnNetCard { background:rgba(0,86,179,.12); border-color:rgba(0,86,179,.3); }
+    body.txn-analytics #txnMarginCard { background:rgba(168,85,247,.12); border-color:rgba(168,85,247,.3); }
+    body.txn-analytics #txnRiskCard { background:rgba(203,213,225,.12); border-color:rgba(203,213,225,.3); }
+
+    body.txn-analytics #txnDashboard .kpi-value.green { color:#10b981; }
+    body.txn-analytics #txnDashboard .kpi-value.red { color:#dc2626; }
+    body.txn-analytics #txnDashboard .kpi-value.warn { color:#f59e0b; }
+    body.txn-analytics #txnDashboard .kpi-value.neutral { color:var(--sub); }
+
+    body.txn-analytics #txnDashboard .table-wrap {
+      background:#ffffff;
+      border:1px solid var(--border);
+    }
+    body.txn-analytics #txnDashboard .dark-table th {
+      color:var(--muted);
+      background:#f8fbff;
+      border-bottom:1px solid var(--border);
+    }
+    body.txn-analytics #txnDashboard .dark-table td {
+      color:var(--text);
+      border-bottom:1px solid var(--border);
+    }
+    body.txn-analytics #txnDashboard .dark-table .reason-cell { color:var(--sub); }
+    body.txn-analytics #txnDashboard .flagged-row:hover { background:#f0f7ff; }
+    body.txn-analytics #txnDashboard .empty-state-row td { color:var(--muted); }
+    body.txn-analytics #txnDashboard .info-tip {
+      border:1px solid rgba(0,86,179,.3);
+      color:#0056b3;
+      background:rgba(0,86,179,.08);
+    }
+    body.txn-analytics #txnDashboard .cfo-content {
+      color:#6b7280;
+    }
+    body.txn-analytics #txnDashboard .cfo-content h2,
+    body.txn-analytics #txnDashboard .cfo-content h3,
+    body.txn-analytics #txnDashboard .cfo-content strong {
+      color:#0056b3;
+    }
+    body.txn-analytics #txnDashboard .chat-placeholder {
+      color:var(--muted);
+    }
+    body.txn-analytics #txnDashboard .chat-msg.user {
+      background:#dbeafe;
+      border:1px solid #93c5fd;
+      color:#1e40af;
+    }
+    body.txn-analytics #txnDashboard .chat-msg.ai {
+      background:#ecfdf3;
+      border:1px solid #86efac;
+      color:#14532d;
+    }
+    body.txn-analytics #txnDashboard .chip {
+      background:var(--card);
+      border:1px solid var(--border);
+      color:var(--text);
+    }
+    body.txn-analytics #txnDashboard .chip:hover {
+      background:#f0f7ff;
+      border-color:rgba(0,86,179,.24);
+      color:#0c4a6e;
+    }
+    body.txn-analytics #txnDashboard .chat-input {
+      background:#ffffff;
+      border:1px solid var(--border);
+      color:var(--text);
+    }
+    body.txn-analytics #txnDashboard .chat-input::placeholder {
+      color:var(--muted);
+    }
+    body.txn-analytics #txnDashboard .btn-send {
+      background:#0056b3;
+      color:#ffffff;
+    }
+    body.txn-analytics #txnDashboard .btn-send:hover {
+      background:#003d82;
+      opacity:1;
+    }
+    body.txn-analytics .btn-ghost {
+      background:#ffffff;
+      border:1px solid var(--border);
+      color:var(--text);
+    }
+    body.txn-analytics .btn-ghost:hover {
+      border-color:rgba(0,86,179,.24);
+      color:#0056b3;
+      background:#f0f7ff;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Decision Analyst logo">
+    </div>
+    <div class="logo-text">
+      <h1>Decision Analyst</h1>
+      <p>SMART FINANCE AUDITOR</p>
+    </div>
+  </div>
+
+  <div id="filenameBadge" class="file-badge" style="display:none">
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+      <path d="M2 6l3 3 5-5" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span id="filenameText"></span>
+  </div>
+
+  <nav class="nav-links">
+    <a href="/upload">Upload Data</a>
+    <a href="/analysis">Classic View</a>
+    <a href="/profile">Profile</a>
+  </nav>
+</header>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- Loading -->
+  <div id="loadingState" class="loading-state">
+    <div class="spinner"></div>
+    <p style="color:var(--muted);font-size:.88rem">Analysing your financial data…</p>
+  </div>
+
+  <!-- Error -->
+  <div id="errorState" style="display:none">
+    <div class="error-banner">
+      <p style="font-size:1.05rem;margin-bottom:8px">⚠ Could not load data</p>
+      <p id="errorMsg" style="font-size:.82rem;margin-bottom:14px">Please upload a file first.</p>
+      <a href="/upload" class="btn-ghost">↑ Upload a file</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       FINANCIAL STATEMENTS DASHBOARD
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="fsDashboard" style="display:none">
+
+    <!-- KPI Row 1: Core financials -->
+    <div class="kpi-grid kpi-grid-4" id="fsKpiRow1">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value green" id="fsRevenue">—</div>
+        <div class="kpi-sub" id="fsRevenueSub"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Net Income</div>
+        <div class="kpi-value" id="fsNetIncome">—</div>
+        <div class="kpi-sub" id="fsNetIncomeSub"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Net Margin</div>
+        <div class="kpi-value blue" id="fsNetMargin">—</div>
+        <div class="kpi-sub" id="fsNetMarginSub"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Risk Level</div>
+        <div id="fsRiskBadgeWrap" style="margin-top:8px"></div>
+        <div class="kpi-sub" id="fsRiskSub"></div>
+      </div>
+    </div>
+
+    <!-- KPI Row 2: Ratio metrics -->
+    <div class="kpi-grid kpi-grid-2" id="fsKpiRow2">
+      <div class="kpi-card">
+        <div class="kpi-label">Avg ROE</div>
+        <div class="kpi-value blue" id="fsRoe">—</div>
+        <div class="kpi-sub">Return on Equity</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg ROA</div>
+        <div class="kpi-value neutral" id="fsRoa">—</div>
+        <div class="kpi-sub">Return on Assets</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg D/E Ratio</div>
+        <div class="kpi-value" id="fsDe">—</div>
+        <div class="kpi-sub" id="fsDesub"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Current Ratio</div>
+        <div class="kpi-value" id="fsCr">—</div>
+        <div class="kpi-sub" id="fsCrsub"></div>
+      </div>
+    </div>
+
+    <!-- Charts Row 1: Company comparison + Sector breakdown -->
+    <div class="chart-row-3">
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title"><span class="dot"></span>Company Performance (Latest Year)</div>
+        <div class="chart-wrap-md"><canvas id="companyBarChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title"><span class="dot blue"></span>Sector Distribution</div>
+        <div class="chart-wrap-md"><canvas id="sectorDonut"></canvas></div>
+      </div>
+    </div>
+    <hr class="divider">
+
+    <!-- Charts Row 2: Year trend -->
+    <div class="card">
+      <div class="section-title"><span class="dot orange"></span>Revenue & Net Income Trend (All Companies)</div>
+      <div class="chart-wrap-tall"><canvas id="yearTrendChart"></canvas></div>
+    </div>
+
+    <!-- Charts Row 3: Risk metrics comparison -->
+    <div class="chart-row-2">
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title"><span class="dot red"></span>D/E Ratio by Company</div>
+        <div class="kpi-sub" style="margin-bottom:12px;font-size:.72rem">⚠ Safe threshold: 2.0 — bars above are high-risk</div>
+        <div class="chart-wrap"><canvas id="deRatioChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title"><span class="dot warn"></span>ROE vs ROA by Company (%)</div>
+        <div class="chart-wrap"><canvas id="roeRoaChart"></canvas></div>
+      </div>
+    </div>
+    <hr class="divider">
+
+    <!-- Risk Flags -->
+    <div class="card">
+      <div class="section-title"><span class="dot red"></span>Risk Assessment Flags</div>
+      <div id="fsRiskFlags"></div>
+    </div>
+
+    <!-- AI CFO Report -->
+    <div class="card">
+      <div class="section-title"><span class="dot"></span>AI Financial Analysis Report</div>
+      <div class="cfo-content" id="fsCfoReport">
+        <p style="color:var(--muted)">Generating AI-powered analysis…</p>
+      </div>
+    </div>
+
+    <!-- Ask Your Data -->
+    <div class="card">
+      <div class="section-title"><span class="dot blue"></span>Ask Your Data</div>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:12px">
+        Ask anything about the companies, financials, or risk factors in this dataset.
+      </p>
+      <div class="chat-suggestions">
+        <span class="chip" onclick="ask('Which company has the highest revenue?')">Which company has the highest revenue?</span>
+        <span class="chip" onclick="ask('What are the main risk factors?')">What are the main risk factors?</span>
+        <span class="chip" onclick="ask('Which company has the best net profit margin?')">Best net profit margin?</span>
+        <span class="chip" onclick="ask('Is the D/E ratio a concern for any company?')">D/E ratio concerns?</span>
+        <span class="chip" onclick="ask('How has revenue grown over the years?')">Revenue growth trend?</span>
+        <span class="chip" onclick="ask('Which company is most financially efficient?')">Most efficient company?</span>
+      </div>
+      <div class="chat-messages" id="fsChatMessages">
+        <p class="chat-placeholder">No messages yet. Try a quick question above!</p>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="fsChatInput"
+               placeholder="Ask about revenue, risk, margins, ratios…"
+               onkeydown="if(event.key==='Enter') sendChat('fs')">
+        <button class="btn-send" id="fsChatBtn" onclick="sendChat('fs')">Send</button>
+      </div>
+    </div>
+
+    <div class="upload-btn-wrap">
+      <a href="/upload" class="btn-ghost">↑ Upload a different file</a>
+    </div>
+  </div>
+  <!-- /fsDashboard -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       TRANSACTION / EXPENSE DASHBOARD
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="txnDashboard" style="display:none">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid kpi-grid-5">
+      <div class="kpi-card" id="txnRevenueCard">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value green" id="txnRevenue">—</div>
+        <div class="kpi-sub" id="txnRevenueSub"></div>
+      </div>
+      <div class="kpi-card" id="txnExpenseCard">
+        <div class="kpi-label">Total Expenses</div>
+        <div class="kpi-value red" id="txnExpenses">—</div>
+        <div class="kpi-sub" id="txnTxnCount"></div>
+      </div>
+      <div class="kpi-card" id="txnNetCard">
+        <div class="kpi-label">Net Profit / Loss</div>
+        <div class="kpi-value" id="txnNet">—</div>
+        <div class="kpi-sub" id="txnNetSub"></div>
+      </div>
+      <div class="kpi-card" id="txnMarginCard">
+        <div class="kpi-label">Gross Margin</div>
+        <div class="kpi-value neutral" id="txnMargin">—</div>
+        <div class="kpi-sub" id="txnMarginSub"></div>
+      </div>
+      <div class="kpi-card risk-card" id="txnRiskCard">
+        <div class="kpi-label">Risk Score</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div class="kpi-value neutral" id="txnRiskScore">—</div>
+          <span class="risk-badge medium" id="txnRiskBadge">Pending</span>
+        </div>
+        <div class="kpi-sub" id="txnRiskSub"></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-row-2">
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title"><span class="dot"></span>Spend by Category</div>
+        <div class="chart-wrap"><canvas id="txnBarChart"></canvas></div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="section-title"><span class="dot blue"></span>Category Distribution</div>
+        <div class="chart-wrap"><canvas id="txnPieChart"></canvas></div>
+      </div>
+    </div>
+    <hr class="divider">
+
+    <div class="card">
+      <div class="section-title"><span class="dot orange"></span>Revenue vs Expense Trend</div>
+      <div class="chart-wrap-tall"><canvas id="txnLineChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><span class="dot red"></span>Anomaly Watchlist</div>
+      <div class="table-wrap">
+        <table class="dark-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Transaction</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="txnAnomalyTableBody">
+            <tr class="empty-state-row">
+              <td colspan="5">Checking for unusual transactions…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI CFO Report -->
+    <div class="card">
+      <div class="section-title"><span class="dot"></span>AI CFO Report</div>
+      <div class="cfo-content" id="txnCfoReport">
+        <p style="color:var(--muted)">Generating report…</p>
+      </div>
+    </div>
+
+    <!-- FORECASTING SECTION -->
+    <div class="card">
+      <div class="section-title"><span class="dot orange"></span>Spending Forecast (30 Days)</div>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:12px">
+        AI-powered prediction of your spending for the next month with confidence intervals.
+      </p>
+      <div class="chart-wrap-tall" id="forecastContainer">
+        <canvas id="forecastChart"></canvas>
+      </div>
+      <div id="forecastTrendInfo" style="margin-top:12px; padding:12px; background:rgba(16,185,129,.05); border-radius:8px;">
+        <p style="color:var(--muted); font-size:.8rem;">Trend analysis loading...</p>
+      </div>
+    </div>
+
+    <!-- BUDGETS SECTION -->
+    <div class="card">
+      <div class="section-title"><span class="dot green"></span>Budget Status</div>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:12px">
+        Track your spending against set budgets for each category.
+      </p>
+      <div id="budgetsContainer" style="min-height:200px;">
+        <p style="color:var(--muted);text-align:center;padding:40px;">Loading budgets...</p>
+      </div>
+    </div>
+
+    <!-- RECURRING TRANSACTIONS SECTION -->
+    <div class="card">
+      <div class="section-title"><span class="dot blue"></span>Recurring Transactions</div>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:12px">
+        Subscriptions and regular payments detected in your data.
+      </p>
+      <div id="recurringContainer" style="min-height:200px;">
+        <table class="dark-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Amount</th>
+              <th>Frequency</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="recurringTableBody">
+            <tr class="empty-state-row">
+              <td colspan="4">Scanning for recurring patterns...</td>
+            </tr>
+          </tbody>
+        </table>
+        <div id="recurringForecastInfo" style="margin-top:12px; padding:12px; background:rgba(0,168,255,.05); border-radius:8px;">
+          <p style="color:var(--muted); font-size:.8rem;">Loading forecast...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask Your Data -->
+    <div class="card">
+      <div class="section-title"><span class="dot blue"></span>Ask Your Data</div>
+      <p style="color:var(--muted);font-size:.8rem;margin-bottom:12px">
+        Ask anything — "Which category is over budget?", "What is my burn rate?", "Where should I cut costs?"
+      </p>
+      <div class="chat-suggestions">
+        <span class="chip" onclick="ask('Which category has the highest spend?')">Highest spend category?</span>
+        <span class="chip" onclick="ask('What is my monthly burn rate?')">Monthly burn rate?</span>
+        <span class="chip" onclick="ask('Where should I cut costs?')">Where to cut costs?</span>
+        <span class="chip" onclick="ask('Are there any unusual transactions?')">Unusual transactions?</span>
+      </div>
+      <div class="chat-messages" id="txnChatMessages">
+        <p class="chat-placeholder">No messages yet. Ask a question above!</p>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="txnChatInput"
+               placeholder="Ask a question about your finances…"
+               onkeydown="if(event.key==='Enter') sendChat('txn')">
+        <button class="btn-send" id="txnChatBtn" onclick="sendChat('txn')">Send</button>
+      </div>
+    </div>
+
+    <div class="upload-btn-wrap">
+      <a href="/upload" class="btn-ghost me-2">↑ Upload a different file</a>
+    </div>
+  </div>
+  <!-- /txnDashboard -->
+
+</div><!-- /main -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+// ── Export Functions ──────────────────────────────────────────────────────
+function exportDashboardPDF(view) {
+    // Create simple text-based report instead of screenshot
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    
+    let reportHTML = `
+<html>
+<head>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; color: #333; line-height: 1.6; }
+    .header { text-align: center; border-bottom: 3px solid #0056b3; padding-bottom: 20px; margin-bottom: 30px; }
+    h1 { color: #0056b3; margin: 0; font-size: 28px; }
+    .subtitle { color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 5px 0; }
+    .date { color: #999; font-size: 11px; margin-top: 10px; }
+    .section { margin-bottom: 30px; page-break-inside: avoid; }
+    .section h2 { color: #0056b3; border-bottom: 2px solid #0056b3; padding-bottom: 10px; font-size: 16px; }
+    .kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 15px 0; }
+    .kpi-item { background: #f0f7ff; padding: 15px; border-radius: 4px; }
+    .kpi-label { font-size: 11px; color: #666; text-transform: uppercase; font-weight: bold; }
+    .kpi-value { font-size: 20px; font-weight: bold; color: #0056b3; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; margin: 15px 0; }
+    th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+    th { background: #0056b3; color: white; font-weight: bold; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 10px; color: #999; }
+</style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="bi bi-diamond me-2" style="color: #0056b3;"></i>Decision Analyst</h1>
+        <div class="subtitle">Smart Finance Auditor</div>
+        <div class="date">Report Generated: ${today}</div>
+    </div>`;
+    
+    if (view === 'txn') {
+        const rev = document.getElementById('txnRevenue')?.textContent || '—';
+        const exp = document.getElementById('txnExpenses')?.textContent || '—';
+        const net = document.getElementById('txnNet')?.textContent || '—';
+        const margin = document.getElementById('txnMargin')?.textContent || '—';
+        const risk = document.getElementById('txnRiskScore')?.textContent || '—';
+        
+        reportHTML += `
+    <div class="section">
+        <h2><i class="bi bi-bar-chart-line me-2" style="color: #0056b3;"></i>Financial Summary</h2>
+        <div class="kpi-row">
+            <div class="kpi-item">
+                <div class="kpi-label">Total Revenue</div>
+                <div class="kpi-value" style="color: #10b981;">${rev}</div>
+            </div>
+            <div class="kpi-item">
+                <div class="kpi-label">Total Expenses</div>
+                <div class="kpi-value" style="color: #dc2626;">${exp}</div>
+            </div>
+        </div>
+        <div class="kpi-row">
+            <div class="kpi-item">
+                <div class="kpi-label">Net Profit / Loss</div>
+                <div class="kpi-value">${net}</div>
+            </div>
+            <div class="kpi-item">
+                <div class="kpi-label">Gross Margin</div>
+                <div class="kpi-value" style="color: #f59e0b;">${margin}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2><i class="bi bi-exclamation-triangle me-2" style="color: #dc2626;"></i>Risk Assessment</h2>
+        <div class="kpi-item" style="grid-column: 1/3;">
+            <div class="kpi-label">Overall Risk Score</div>
+            <div class="kpi-value" style="color: #dc2626;">${risk}</div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🤖 AI Insights</h2>
+        <p>${document.getElementById('txnCfoReport')?.innerText || 'No insights available'}</p>
+    </div>`;
+    }
+    
+    reportHTML += `
+    <div class="footer">
+        <p>This report was automatically generated by Decision Analyst</p>
+        <p>© 2025-2026 Decision Analyst. All rights reserved.</p>
+    </div>
+</body>
+</html>`;
+    
+    const opt = {
+        margin: 10,
+        filename: `Decision-Analyst-Report-${new Date().toLocaleDateString().replace(/\\//g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, logging: false, allowTaint: true },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+    html2pdf().set(opt).from(reportHTML).save();
+}
+
+function exportDashboardCSV(view) {
+    const element = view === 'fs' ? document.getElementById('fsDashboard') : document.getElementById('txnDashboard');
+    if (!element) { alert('Dashboard not found'); return; }
+    
+    const csv = [];
+    const rows = element.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('td, th');
+        const rowData = [];
+        cols.forEach(col => {
+            rowData.push('"' + col.textContent.trim().replace(/"/g, '""') + '"');
+        });
+        csv.push(rowData.join(','));
+    });
+    
+    const link = document.createElement('a');
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv.join('\n'));
+    link.download = `Decision-Analyst-${view}-Report-${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+    link.click();
+}
+
+// ── Colour palette ─────────────────────────────────────────────────────────
+const PALETTE = [
+  '#10b981','#0056b3','#f59e0b','#a855f7','#f472b6',
+  '#34d399','#fbbf24','#60a5fa','#f87171','#4ade80',
+  '#e879f9','#2dd4bf','#facc15','#818cf8'
+];
+
+// ── Number formatters ──────────────────────────────────────────────────────
+/** Format millions → ₹XB / ₹XM */
+function fmtM(n) {
+  if (n == null || isNaN(n)) return 'N/A';
+  const abs = Math.abs(n);
+  let s;
+  if      (abs >= 1e6) s = (abs / 1e6).toFixed(2) + 'T';
+  else if (abs >= 1e3) s = (abs / 1e3).toFixed(1) + 'B';
+  else if (abs >= 1)   s = abs.toFixed(0) + 'M';
+  else                 s = abs.toFixed(2);
+  return (n < 0 ? '-₹' : '₹') + s;
+}
+
+/** Format regular rupee amounts */
+function fmt$(n) {
+  if (n == null || isNaN(n)) return 'N/A';
+  const abs = Math.abs(n);
+  let s;
+  if      (abs >= 1e9) s = (abs / 1e9).toFixed(2) + 'B';
+  else if (abs >= 1e6) s = (abs / 1e6).toFixed(2) + 'M';
+  else if (abs >= 1e3) s = (abs / 1e3).toFixed(1) + 'K';
+  else                 s = abs.toFixed(0);
+  return (n < 0 ? '-₹' : '₹') + s;
+}
+
+function fmtFull(n) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency', currency: 'INR', maximumFractionDigits: 0
+  }).format(n ?? 0);
+}
+
+function riskClassFromScore(score) {
+  if (score <= 30) return 'low';
+  if (score <= 60) return 'medium';
+  if (score <= 85) return 'high';
+  return 'critical';
+}
+
+// ── Chart default styling ──────────────────────────────────────────────────
+const CD = {
+  plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12, padding: 12, font: { size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    y: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.06)' } }
+  }
+};
+
+// active data mode (for chat context)
+let _mode = 'fs';
+let _fsData = null;
+
+const TXN_CHART_THEME = {
+  text: '#1f2937',
+  muted: '#6b7280',
+  grid: 'rgba(0,86,179,0.08)',
+  barColors: ['#10b981', '#0056b3', '#f59e0b', '#dc2626', '#a855f7', '#06b6d4', '#f97316', '#00a8ff', '#6366f1', '#ec4899'],
+  revenue: '#10b981',
+  revenueFill: 'rgba(16,185,129,0.15)',
+  expense: '#dc2626',
+  expenseFill: 'rgba(220,38,38,0.08)',
+  pieBorder: '#f8fbff'
+};
+
+// ── Main data loader ───────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const res  = await fetch('/api/finsight-data');
+    const data = await res.json();
+
+    document.getElementById('loadingState').style.display = 'none';
+
+    if (!data.success) {
+      document.getElementById('errorMsg').textContent = data.message || 'Failed to load data.';
+      document.getElementById('errorState').style.display = 'block';
+      return;
+    }
+
+    // Filename badge
+    if (data.filename) {
+      document.getElementById('filenameText').textContent = data.filename;
+      document.getElementById('filenameBadge').style.display = 'flex';
+    }
+
+    if (data.data_type === 'financial_statements') {
+      document.body.classList.remove('txn-analytics');
+      _mode = 'fs';
+      _fsData = data;
+      renderFS(data);
+      document.getElementById('fsDashboard').style.display = 'block';
+    } else {
+      document.body.classList.add('txn-analytics');
+      _mode = 'txn';
+      _fsData = data;
+      renderTXN(data);
+      document.getElementById('txnDashboard').style.display = 'block';
+    }
+  } catch (e) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorMsg').textContent = e.message || 'Network error.';
+    document.getElementById('errorState').style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  FINANCIAL STATEMENTS RENDERER
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderFS(data) {
+  const ov = data.overview || {};
+
+  // ── KPI Row 1 ──
+  document.getElementById('fsRevenue').textContent    = fmtM(ov.total_revenue);
+  document.getElementById('fsRevenueSub').textContent = `${ov.years?.length ?? 0} yrs · ${ov.companies?.length ?? 0} companies`;
+
+  const niEl  = document.getElementById('fsNetIncome');
+  const niSub = document.getElementById('fsNetIncomeSub');
+  niEl.textContent = fmtM(ov.total_net_income);
+  niEl.className   = 'kpi-value ' + (ov.total_net_income >= 0 ? 'green' : 'red');
+  niSub.textContent = ov.total_net_income >= 0 ? 'Net profitable' : '⚠ Net losses recorded';
+
+  const nmEl  = document.getElementById('fsNetMargin');
+  const nmSub = document.getElementById('fsNetMarginSub');
+  nmEl.textContent = (ov.avg_net_margin_pct ?? 0).toFixed(1) + '%';
+  nmEl.className   = 'kpi-value ' + ((ov.avg_net_margin_pct ?? 0) >= 10 ? 'blue' : (ov.avg_net_margin_pct ?? 0) >= 0 ? 'warn' : 'red');
+  nmSub.textContent = (ov.avg_net_margin_pct ?? 0) >= 15 ? 'Healthy margin' : (ov.avg_net_margin_pct ?? 0) >= 5 ? 'Moderate margin' : 'Thin margin';
+
+  const riskWrap = document.getElementById('fsRiskBadgeWrap');
+  const rl = (ov.risk_level || 'low').toLowerCase();
+  riskWrap.innerHTML = `<span class="risk-badge ${rl}">${rl === 'low' ? '✓' : '⚠'} ${ov.risk_level || 'Low'} Risk</span>`;
+  document.getElementById('fsRiskSub').textContent = `${(ov.risk_flags || []).length} flag(s) detected`;
+
+  // ── KPI Row 2 ──
+  const roeEl = document.getElementById('fsRoe');
+  roeEl.textContent = (ov.avg_roe ?? 0).toFixed(1) + '%';
+  roeEl.className   = 'kpi-value ' + ((ov.avg_roe ?? 0) >= 15 ? 'blue' : (ov.avg_roe ?? 0) >= 10 ? 'warn' : 'red');
+
+  document.getElementById('fsRoa').textContent = (ov.avg_roa ?? 0).toFixed(1) + '%';
+
+  const deEl  = document.getElementById('fsDe');
+  const deSub = document.getElementById('fsDesub');
+  deEl.textContent = (ov.avg_de_ratio ?? 0).toFixed(2);
+  deEl.className   = 'kpi-value ' + ((ov.avg_de_ratio ?? 0) > 2 ? 'red' : (ov.avg_de_ratio ?? 0) > 1.5 ? 'warn' : 'green');
+  deSub.textContent = (ov.avg_de_ratio ?? 0) > 2 ? '⚠ High leverage' : (ov.avg_de_ratio ?? 0) > 1 ? 'Moderate leverage' : 'Low leverage';
+
+  const crEl  = document.getElementById('fsCr');
+  const crSub = document.getElementById('fsCrsub');
+  crEl.textContent = (ov.avg_current_ratio ?? 0).toFixed(2);
+  crEl.className   = 'kpi-value ' + ((ov.avg_current_ratio ?? 0) < 1 ? 'red' : (ov.avg_current_ratio ?? 0) < 1.5 ? 'warn' : 'green');
+  crSub.textContent = (ov.avg_current_ratio ?? 0) < 1 ? '⚠ Liquidity risk' : (ov.avg_current_ratio ?? 0) < 1.5 ? 'Tight liquidity' : 'Good liquidity';
+
+  // ── Charts ──
+  buildCompanyBar(data.company_comparison || {});
+  buildSectorDonut(data.sector_breakdown || {});
+  buildYearTrend(data.year_trend || {});
+  buildDERatioChart(data.risk_metrics || {});
+  buildROEROAChart(data.risk_metrics || {});
+
+  // ── Risk flags ──
+  const flagsEl = document.getElementById('fsRiskFlags');
+  const flags   = ov.risk_flags || [];
+  if (flags.length === 0) {
+    flagsEl.innerHTML = '<div class="no-risk-flag">✓ No major financial risk flags detected in this dataset.</div>';
+  } else {
+    flagsEl.innerHTML = '<div class="risk-flags">' +
+      flags.map(f => `<div class="risk-flag-item"><span class="flag-icon">⚠</span><span>${f}</span></div>`).join('') +
+      '</div>';
+  }
+
+  // ── CFO Report ──
+  const cfo = (data.cfo_report || '').trim();
+  document.getElementById('fsCfoReport').innerHTML = cfo
+    ? marked.parse(cfo)
+    : '<p style="color:var(--muted)">AI report unavailable. Check your Groq API key.</p>';
+}
+
+// Company comparison grouped bar  ──────────────────────────────────────────
+function buildCompanyBar(cc) {
+  if (!cc.labels || cc.labels.length === 0) return;
+  new Chart(document.getElementById('companyBarChart'), {
+    type: 'bar',
+    data: {
+      labels: cc.labels,
+      datasets: [
+        { label: 'Revenue',      data: cc.revenue,      backgroundColor: '#10b98180', borderColor: '#10b981', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Gross Profit', data: cc.gross_profit, backgroundColor: '#0056b380', borderColor: '#0056b3', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Net Income',   data: cc.net_income,   backgroundColor: '#a78bfa80', borderColor: '#a78bfa', borderWidth: 1.5, borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', boxWidth: 11, padding: 10, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtM(ctx.parsed.y)}` } }
+      },
+      scales: {
+        x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#6b7280', callback: v => fmtM(v) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+// Sector donut ─────────────────────────────────────────────────────────────
+function buildSectorDonut(sb) {
+  const labels = Object.keys(sb);
+  const values = Object.values(sb);
+  if (labels.length === 0) return;
+  const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+  new Chart(document.getElementById('sectorDonut'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderColor: '#0d1421', borderWidth: 2, hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '58%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, padding: 8, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtM(ctx.parsed)}` } }
+      }
+    }
+  });
+}
+
+// Year trend  ──────────────────────────────────────────────────────────────
+function buildYearTrend(yt) {
+  if (!yt.years || yt.years.length === 0) return;
+  const labels  = yt.years.map(String);
+  const companyEntries = Object.entries(yt.companies || {});
+
+  let datasets = [];
+  if (companyEntries.length > 0 && companyEntries.length <= 8) {
+    // Per-company lines
+    companyEntries.forEach(([name, vals], i) => {
+      // Align to main years array
+      const revMap = {};
+      vals.years.forEach((y, j) => { revMap[y] = vals.revenue[j]; });
+      const revData = yt.years.map(y => revMap[y] ?? null);
+      datasets.push({
+        label: name + ' Rev',
+        data: revData,
+        borderColor: PALETTE[i % PALETTE.length],
+        backgroundColor: PALETTE[i % PALETTE.length] + '18',
+        tension: 0.35, fill: false, pointRadius: 3, borderWidth: 2
+      });
+    });
+  } else {
+    // Aggregated
+    datasets = [
+      { label: 'Total Revenue',    data: yt.revenue,    borderColor: '#00ff88', backgroundColor: '#00ff8818', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 3 },
+      { label: 'Total Net Income', data: yt.net_income, borderColor: '#38bdf8', backgroundColor: '#38bdf818', tension: 0.35, fill: false, borderWidth: 2, pointRadius: 3 },
+      { label: 'Gross Profit',     data: yt.gross_profit, borderColor: '#fb923c', backgroundColor: 'transparent', tension: 0.35, fill: false, borderWidth: 2, pointRadius: 3, borderDash: [4,4] },
+    ];
+  }
+
+  new Chart(document.getElementById('yearTrendChart'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 11, padding: 10, font: { size: 11 } } },
+                 tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtM(ctx.parsed.y)}` } } },
+      scales: {
+        x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#6b7280', callback: v => fmtM(v) }, grid: { color: 'rgba(255,255,255,0.06)' } }
+      }
+    }
+  });
+}
+
+// D/E Ratio bar ────────────────────────────────────────────────────────────
+function buildDERatioChart(rm) {
+  if (!rm.labels || rm.labels.length === 0) return;
+  const threshold = new Array(rm.labels.length).fill(2.0);
+  const barColors = rm.de_ratio.map(v => v > 2.0 ? '#ff6b6b' : v > 1.5 ? '#fbbf24' : '#00ff88');
+  new Chart(document.getElementById('deRatioChart'), {
+    type: 'bar',
+    data: {
+      labels: rm.labels,
+      datasets: [
+        { label: 'D/E Ratio', data: rm.de_ratio, backgroundColor: barColors, borderRadius: 4, order: 2 },
+        { label: 'Threshold (2.0)', data: threshold, type: 'line', borderColor: '#ff6b6b', borderDash: [5,5], borderWidth: 1.5, pointRadius: 0, fill: false, order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 11, font: { size: 11 } } },
+                 tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${typeof ctx.parsed.y === 'number' ? ctx.parsed.y.toFixed(2) : 'N/A'}` } } },
+      scales: {
+        x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ROE vs ROA grouped bar ───────────────────────────────────────────────────
+function buildROEROAChart(rm) {
+  if (!rm.labels || rm.labels.length === 0) return;
+  new Chart(document.getElementById('roeRoaChart'), {
+    type: 'bar',
+    data: {
+      labels: rm.labels,
+      datasets: [
+        { label: 'ROE (%)',        data: rm.roe, backgroundColor: '#00ff8888', borderColor: '#00ff88', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'ROA (%)',        data: rm.roa, backgroundColor: '#38bdf888', borderColor: '#38bdf8', borderWidth: 1.5, borderRadius: 4 },
+        { label: 'Net Margin (%)', data: rm.net_margin, backgroundColor: '#a78bfa88', borderColor: '#a78bfa', borderWidth: 1.5, borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 11, font: { size: 11 } } },
+                 tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${(ctx.parsed.y ?? 0).toFixed(1)}%` } } },
+      scales: {
+        x: { ticks: { color: '#6b7280' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#6b7280', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+      }
+    }
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  TRANSACTION DASHBOARD RENDERER
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderTXN(data) {
+  const ov = data.overview || {};
+  const { total_revenue: rev, total_expenses: exp, net_profit: net,
+          gross_margin: margin, transaction_count: txnCount } = ov;
+  const riskScore = Number.isFinite(data.risk_score) ? data.risk_score : 0;
+  const riskLabel = data.risk_label || 'Low Risk';
+  const riskClass = riskClassFromScore(riskScore);
+
+  document.getElementById('txnRevenue').textContent    = fmtFull(rev);
+  document.getElementById('txnRevenueSub').textContent = rev === 0 ? 'No revenue detected' : '';
+  document.getElementById('txnExpenses').textContent   = fmtFull(exp);
+  document.getElementById('txnTxnCount').textContent   = `${(txnCount ?? 0).toLocaleString()} transactions`;
+
+  const netEl  = document.getElementById('txnNet');
+  const netSub = document.getElementById('txnNetSub');
+  netEl.textContent = fmtFull(net);
+  if (net < 0) {
+    netEl.className   = 'kpi-value red';
+    netSub.innerHTML  = '<span style="color:#fbbf24">⚠</span> Operating at a loss';
+  } else if (net > 0) {
+    netEl.className   = 'kpi-value green';
+    netSub.textContent = 'Profitable';
+  } else {
+    netEl.className   = 'kpi-value neutral';
+    netSub.textContent = 'Break-even';
+  }
+
+  const marginEl  = document.getElementById('txnMargin');
+  const marginSub = document.getElementById('txnMarginSub');
+  if (margin == null) {
+    marginEl.textContent  = 'N/A';
+    marginEl.className    = 'kpi-value neutral';
+    marginSub.textContent = `${(txnCount ?? 0).toLocaleString()} transactions`;
+  } else {
+    marginEl.textContent  = margin.toFixed(1) + '%';
+    marginEl.className    = 'kpi-value ' + (margin >= 15 ? 'green' : margin >= 5 ? 'warn' : 'red');
+    marginSub.textContent = margin >= 15 ? 'Healthy margin' : margin >= 5 ? 'Thin margin' : 'Very thin margin';
+  }
+
+  const riskScoreEl = document.getElementById('txnRiskScore');
+  const riskBadgeEl = document.getElementById('txnRiskBadge');
+  const riskCardEl = document.getElementById('txnRiskCard');
+  riskScoreEl.textContent = `${riskScore}/100`;
+  riskScoreEl.className = 'kpi-value ' + (riskClass === 'low' ? 'green' : riskClass === 'medium' ? 'warn' : 'red');
+  riskBadgeEl.className = `risk-badge ${riskClass}`;
+  riskBadgeEl.textContent = riskLabel;
+  riskCardEl.className = `kpi-card risk-card ${riskClass}`;
+  document.getElementById('txnRiskSub').textContent = `${(data.anomalies || []).length} anomaly flag(s) detected`;
+
+  buildTXNCharts(data.category_totals || {}, data.trend || {});
+  renderTxnAnomalies(data.anomalies || []);
+
+  const cfo = (data.cfo_report || '').trim();
+  document.getElementById('txnCfoReport').innerHTML = cfo
+    ? marked.parse(cfo)
+    : '<p style="color:var(--muted)">AI report unavailable.</p>';
+
+  // Load advanced analytics
+  loadForecasting();
+  loadBudgets();
+  loadRecurringTransactions();
+}
+
+function renderTxnAnomalies(anomalies) {
+  const body = document.getElementById('txnAnomalyTableBody');
+  if (!anomalies.length) {
+    body.innerHTML = '<tr class="empty-state-row"><td colspan="5">No major anomalies detected in this dataset.</td></tr>';
+    return;
+  }
+
+  // Store all anomalies globally for pagination
+  window._allAnomalies = anomalies;
+  window._anomaliesShown = 10;
+
+  // Show first 10
+  const displayed = anomalies.slice(0, 10);
+  let html = displayed.map(item => `
+    <tr class="flagged-row">
+      <td>${escHtml((item.date || 'N/A').replace('T', ' ').slice(0, 19))}</td>
+      <td>
+        <span class="flag-detail">
+          <span>${escHtml(item.description || 'Unknown')}</span>
+          <span class="info-tip" title="${escAttr(item.reason || 'No reason available')}">ⓘ</span>
+        </span>
+      </td>
+      <td>${escHtml(item.category || 'Uncategorized')}</td>
+      <td class="amount-cell">${fmtFull(item.amount || 0)}</td>
+      <td class="reason-cell">${escHtml(item.reason || 'No reason available')}</td>
+    </tr>
+  `).join('');
+
+  // Add "Load More" row if there are more anomalies
+  if (anomalies.length > 10) {
+    html += `
+      <tr class="load-more-row">
+        <td colspan="5" style="text-align:center;padding:16px;">
+          <button onclick="loadMoreAnomalies()" style="
+            background:rgba(56,189,248,0.2);
+            border:1px solid rgba(56,189,248,0.5);
+            color:var(--accent2);
+            padding:8px 16px;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:600;
+            font-size:0.85rem;
+            transition:all 0.2s;
+          " onmouseover="this.style.background='rgba(56,189,248,0.3)'" onmouseout="this.style.background='rgba(56,189,248,0.2)'">
+            Load More (+${anomalies.length - 10} more)
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  body.innerHTML = html;
+}
+
+function loadMoreAnomalies() {
+  const body = document.getElementById('txnAnomalyTableBody');
+  window._anomaliesShown += 10;
+
+  const displayed = window._allAnomalies.slice(0, window._anomaliesShown);
+  let html = displayed.map(item => `
+    <tr class="flagged-row">
+      <td>${escHtml((item.date || 'N/A').replace('T', ' ').slice(0, 19))}</td>
+      <td>
+        <span class="flag-detail">
+          <span>${escHtml(item.description || 'Unknown')}</span>
+          <span class="info-tip" title="${escAttr(item.reason || 'No reason available')}">ⓘ</span>
+        </span>
+      </td>
+      <td>${escHtml(item.category || 'Uncategorized')}</td>
+      <td class="amount-cell">${fmtFull(item.amount || 0)}</td>
+      <td class="reason-cell">${escHtml(item.reason || 'No reason available')}</td>
+    </tr>
+  `).join('');
+
+  // Add "Load More" again if there are still more
+  if (window._anomaliesShown < window._allAnomalies.length) {
+    html += `
+      <tr class="load-more-row">
+        <td colspan="5" style="text-align:center;padding:16px;">
+          <button onclick="loadMoreAnomalies()" style="
+            background:rgba(56,189,248,0.2);
+            border:1px solid rgba(56,189,248,0.5);
+            color:var(--accent2);
+            padding:8px 16px;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:600;
+            font-size:0.85rem;
+            transition:all 0.2s;
+          " onmouseover="this.style.background='rgba(56,189,248,0.3)'" onmouseout="this.style.background='rgba(56,189,248,0.2)'">
+            Load More (+${window._allAnomalies.length - window._anomaliesShown} more)
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  body.innerHTML = html;
+}
+
+function buildTXNCharts(catTotals, trend) {
+  const cats   = Object.keys(catTotals).slice(0, 10);
+  const vals   = cats.map(c => catTotals[c]);
+  const colors = cats.map((_, i) => TXN_CHART_THEME.barColors[i % TXN_CHART_THEME.barColors.length]);
+
+  new Chart(document.getElementById('txnBarChart'), {
+    type: 'bar',
+    data: {
+      labels: cats,
+      datasets: [{ data: vals, backgroundColor: colors, borderRadius: 5 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+                 tooltip: { callbacks: { label: ctx => ' ' + fmtFull(ctx.parsed.x) } } },
+      scales: {
+        x: { ticks: { color: TXN_CHART_THEME.muted, callback: v => fmt$(v) }, grid: { color: TXN_CHART_THEME.grid } },
+        y: { ticks: { color: TXN_CHART_THEME.text }, grid: { display: false } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('txnPieChart'), {
+    type: 'doughnut',
+    data: { labels: cats, datasets: [{ data: vals, backgroundColor: colors, borderColor: TXN_CHART_THEME.pieBorder, borderWidth: 3, hoverOffset: 8 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: TXN_CHART_THEME.text, boxWidth: 11, padding: 9, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtFull(ctx.parsed)} (${((ctx.parsed / vals.reduce((a,b)=>a+b,0))*100).toFixed(1)}%)` } }
+      }
+    }
+  });
+
+  if (trend && trend.labels) {
+    new Chart(document.getElementById('txnLineChart'), {
+      type: 'line',
+      data: {
+        labels: trend.labels,
+        datasets: [
+          { label: 'Revenue',  data: trend.revenue,  borderColor: TXN_CHART_THEME.revenue, backgroundColor: TXN_CHART_THEME.revenueFill, tension: 0.3, fill: true,  borderWidth: 2, pointRadius: 3 },
+          { label: 'Expenses', data: trend.expenses, borderColor: TXN_CHART_THEME.expense, backgroundColor: TXN_CHART_THEME.expenseFill, tension: 0.3, fill: false, borderWidth: 2, pointRadius: 3 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: TXN_CHART_THEME.text, boxWidth: 11, font: { size: 11 } } },
+                   tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtFull(ctx.parsed.y)}` } } },
+        scales: {
+          x: { ticks: { color: TXN_CHART_THEME.muted }, grid: { color: TXN_CHART_THEME.grid } },
+          y: { ticks: { color: TXN_CHART_THEME.muted, callback: v => fmt$(v) }, grid: { color: TXN_CHART_THEME.grid } }
+        }
+      }
+    });
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  SHARED CHAT
+// ══════════════════════════════════════════════════════════════════════════
+
+function ask(q) {
+  if (_mode === 'fs') {
+    document.getElementById('fsChatInput').value = q;
+    sendChat('fs');
+  } else {
+    document.getElementById('txnChatInput').value = q;
+    sendChat('txn');
+  }
+}
+
+async function sendChat(mode) {
+  const inputId  = mode === 'fs' ? 'fsChatInput'   : 'txnChatInput';
+  const msgsId   = mode === 'fs' ? 'fsChatMessages' : 'txnChatMessages';
+  const btnId    = mode === 'fs' ? 'fsChatBtn'      : 'txnChatBtn';
+
+  const input = document.getElementById(inputId);
+  const q     = input.value.trim();
+  if (!q) return;
+
+  const msgsEl = document.getElementById(msgsId);
+  const placeholder = msgsEl.querySelector('.chat-placeholder');
+  if (placeholder) placeholder.remove();
+
+  // User bubble
+  msgsEl.insertAdjacentHTML('beforeend',
+    `<div class="chat-msg user">${escHtml(q)}</div>`);
+  input.value = '';
+
+  // Loading bubble
+  const loadId = 'chat-load-' + Date.now();
+  msgsEl.insertAdjacentHTML('beforeend',
+    `<div class="chat-msg loading" id="${loadId}">Thinking…</div>`);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  document.getElementById(btnId).disabled = true;
+
+  try {
+    const res  = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    const data = await res.json();
+    document.getElementById(loadId)?.remove();
+    const answer = data.success ? data.answer : (data.message || 'Error getting answer.');
+    msgsEl.insertAdjacentHTML('beforeend',
+      `<div class="chat-msg ai">${marked.parse(answer)}</div>`);
+  } catch (e) {
+    document.getElementById(loadId)?.remove();
+    msgsEl.insertAdjacentHTML('beforeend',
+      `<div class="chat-msg ai" style="color:var(--danger)">Network error. Please try again.</div>`);
+  } finally {
+    document.getElementById(btnId).disabled = false;
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  FORECAST, BUDGET & RECURRING LOADERS
+// ══════════════════════════════════════════════════════════════════════════
+
+async function loadForecasting() {
+  try {
+    const res = await fetch('/api/forecast?periods=30');
+    const data = await res.json();
+    
+    if (!data.success) {
+      document.getElementById('forecastTrendInfo').innerHTML = 
+        `<p style="color:var(--danger);font-size:.8rem;">Unable to generate forecast: ${data.message}</p>`;
+      return;
+    }
+
+    // Create forecast chart
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.dates.slice(0, 30),
+        datasets: [{
+          label: 'Forecasted Spending',
+          data: data.forecast,
+          borderColor: '#0056b3',
+          backgroundColor: 'rgba(0,86,179,0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 3,
+          pointBackgroundColor: '#0056b3'
+        }, {
+          label: 'Upper Confidence',
+          data: data.confidence_upper,
+          borderColor: 'rgba(239,68,68,0.3)',
+          borderDash: [5, 5],
+          fill: false,
+          borderWidth: 1,
+          pointRadius: 0
+        }, {
+          label: 'Lower Confidence',
+          data: data.confidence_lower,
+          borderColor: 'rgba(0,168,255,0.3)',
+          borderDash: [5, 5],
+          fill: false,
+          borderWidth: 1,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { 
+            display: true, 
+            labels: { color: TXN_CHART_THEME.text, usePointStyle: true }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ₹${fmtFull(ctx.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          y: { 
+            ticks: { color: TXN_CHART_THEME.muted, callback: v => fmt$(v) },
+            grid: { color: TXN_CHART_THEME.grid }
+          },
+          x: {
+            ticks: { color: TXN_CHART_THEME.muted },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    // Update trend info
+    const trend = data.trend || 'stable';
+    const trendIcon = trend === 'increasing' ? '<i class="bi bi-graph-up" style="color: #10b981;"></i>' : trend === 'decreasing' ? '<i class="bi bi-graph-down" style="color: #dc2626;"></i>' : '<i class="bi bi-arrow-right" style="color: #6b7280;"></i>';
+    document.getElementById('forecastTrendInfo').innerHTML = 
+      `<p style="color:var(--sub);font-size:.8rem;"><strong>${trendIcon} Trend:</strong> Your spending is <strong>${trend}</strong>.</p>`;
+  } catch (e) {
+    console.warn('Forecasting failed:', e);
+    document.getElementById('forecastTrendInfo').innerHTML = 
+      `<p style="color:var(--muted);font-size:.8rem;">Forecast unavailable</p>`;
+  }
+}
+
+async function loadBudgets() {
+  try {
+    const res = await fetch('/api/budgets');
+    const data = await res.json();
+    
+    if (!data.success || !data.budgets || data.budgets.length === 0) {
+      document.getElementById('budgetsContainer').innerHTML = 
+        `<p style="color:var(--muted);text-align:center;padding:30px;">No budgets set. Create one to track spending!</p>`;
+      return;
+    }
+
+    let html = '';
+    for (const budget of data.budgets) {
+      // Get budget status for this budget
+      const statusRes = await fetch(`/api/budgets/status/${budget.id}`);
+      const statusData = await statusRes.json();
+      
+      if (!statusData.success) continue;
+      
+      const status = statusData.status;
+      const percentage = Math.min(100, status.percentage_used);
+      const fillClass = percentage >= 100 ? 'critical' : percentage >= 90 ? 'warning' : '';
+      
+      html += `
+        <div class="budget-item">
+          <div class="budget-header">
+            <div class="budget-category">${escHtml(budget.category)}</div>
+            <div class="budget-amount">₹${fmtFull(status.current_spending)} / ₹${fmtFull(budget.limit_amount)}</div>
+          </div>
+          <div class="budget-progress-bar">
+            <div class="budget-progress-fill ${fillClass}" style="width:${percentage}%"></div>
+          </div>
+          <div class="budget-footer">
+            <span>${percentage.toFixed(0)}% used</span>
+            <span>₹${fmtFull(status.remaining)} remaining</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    document.getElementById('budgetsContainer').innerHTML = html || 
+      '<p style="color:var(--muted);">No budget data available</p>';
+  } catch (e) {
+    console.warn('Budgets failed:', e);
+    document.getElementById('budgetsContainer').innerHTML = 
+      '<p style="color:var(--danger);font-size:.8rem;">Error loading budgets</p>';
+  }
+}
+
+async function loadRecurringTransactions() {
+  try {
+    const res = await fetch('/api/recurring');
+    const data = await res.json();
+    
+    if (!data.success || !data.recurring_transactions || data.recurring_transactions.length === 0) {
+      document.getElementById('recurringTableBody').innerHTML = 
+        `<tr class="empty-state-row"><td colspan="4">No recurring transactions detected</td></tr>`;
+      return;
+    }
+
+    let tableHtml = '';
+    for (const txn of data.recurring_transactions) {
+      const conf = Math.round((txn.confidence_score || 0) * 100);
+      tableHtml += `
+        <tr>
+          <td>${escHtml(txn.name)}</td>
+          <td>₹${fmtFull(txn.amount)}</td>
+          <td>${escHtml(txn.frequency)}</td>
+          <td><span class="confidence-badge">${conf}% confident</span></td>
+        </tr>
+      `;
+    }
+    
+    document.getElementById('recurringTableBody').innerHTML = tableHtml;
+    
+    // Update forecast  info
+    const monthlyForecast = data.monthly_forecast || 0;
+    document.getElementById('recurringForecastInfo').innerHTML = 
+      `<p style="color:var(--sub);font-size:.8rem;"><strong><i class="bi bi-wallet2" style="color: #f59e0b;"></i> Monthly Recurring:</strong> Approximately <strong>₹${fmtFull(monthlyForecast)}</strong> from ${data.count} recurring transaction(s).</p>`;
+  } catch (e) {
+    console.warn('Recurring transactions failed:', e);
+    document.getElementById('recurringTableBody').innerHTML = 
+      '<tr class="empty-state-row"><td colspan="4">Error loading recurring transactions</td></tr>';
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escAttr(s) {
+  return escHtml(String(s || '')).replace(/"/g, '&quot;');
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

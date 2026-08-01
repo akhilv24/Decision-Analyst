@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Decision Analyst</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --bg:       #ffffff;
+      --card:     #f8fbff;
+      --card2:    #f0f7ff;
+      --border:   rgba(0,86,179,0.12);
+      --accent:   #0056b3;
+      --text:     #1f2937;
+      --muted:    #6b7280;
+      --success:  #4caf50;
+      --danger:   #dc2626;
+    }
+
+    body[data-theme="dark"] {
+      --bg:       #0f172a;
+      --card:     #1e293b;
+      --card2:    #334155;
+      --border:   rgba(148,163,184,0.2);
+      --accent:   #0056b3;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --success:  #4caf50;
+      --danger:   #dc2626;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 32px; border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,0.96); backdrop-filter:blur(12px);
+      position:sticky; top:0; z-index:100;
+      transition: all 0.3s ease;
+    }
+
+    body[data-theme="dark"] .header {
+      background:rgba(30, 41, 59, 0.96);
+    }
+    .logo { display:flex; align-items:center; gap:14px; }
+    .logo-icon {
+      width:42px; height:42px; border-radius:10px;
+      background:linear-gradient(135deg,#10b981,#0056b3);
+      display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff;
+    }
+    .logo-text h1 { font-size:1.2rem; font-weight:700; }
+    .logo-text p  { font-size:.6rem; color:var(--muted); letter-spacing:2.5px; margin-top:2px; }
+    .nav-links { display:flex; gap:18px; align-items:center; }
+    .nav-links a { color:var(--muted); text-decoration:none; transition:color .2s; }
+    .nav-links a:hover { color:var(--text); }
+    .nav-links a.active { color:var(--accent); font-weight:600; }
+
+    /* Two-column layout */
+    .settings-container {
+      display:grid; grid-template-columns:240px 1fr; gap:32px;
+      max-width:1200px; margin:0 auto; padding:28px 24px 64px;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      height:fit-content; position:sticky; top:100px;
+    }
+    .sidebar-title {
+      font-size:.7rem; letter-spacing:2px; text-transform:uppercase;
+      font-weight:700; margin-bottom:12px; color:var(--muted);
+    }
+    .nav-tabs {
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .nav-tab {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; cursor:pointer; text-decoration:none;
+      color:var(--text); border-radius:8px; border-left:3px solid transparent;
+      transition: all .2s; font-size:.9rem;
+    }
+    .nav-tab:hover {
+      background:var(--card);
+    }
+    .nav-tab.active {
+      border-left-color:var(--accent); background:var(--card);
+      font-weight:700; color:var(--accent);
+    }
+    .nav-tab i {
+      width:18px; text-align:center;
+    }
+
+    /* Content Area */
+    .content {
+      display:flex; flex-direction:column; gap:24px;
+    }
+    .section {
+      display:none;
+    }
+    .section.active {
+      display:block;
+    }
+    .section-title {
+      display:flex; align-items:center; gap:9px;
+      font-size:1.35rem; font-weight:700; margin-bottom:16px;
+      color:var(--text);
+    }
+    .section-title i {
+      color:var(--accent); font-size:1.5rem;
+    }
+    .section-desc {
+      color:var(--muted); font-size:.9rem; margin-bottom:24px;
+    }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); }
+    .card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:22px 24px;
+    }
+    .card h3 { font-size:1.1rem; margin-bottom:16px; }
+    .form-group {
+      margin-bottom:16px;
+    }
+    .form-group label {
+      display:block; font-size:.85rem; font-weight:600; margin-bottom:6px; color:var(--accent);
+    }
+    .form-group input,
+    .form-group select {
+      width:100%; padding:10px 12px; border:1px solid var(--border);
+      background:var(--card2); color:var(--text); border-radius:8px;
+      font-size:.9rem;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,200,255,0.2);
+    }
+    .btn {
+      display:inline-block; padding:10px 16px; border-radius:8px;
+      border:none; cursor:pointer; font-weight:600; font-size:.85rem;
+      transition: all .2s;
+    }
+    .btn-primary {
+      background:var(--accent); color:#fff;
+    }
+    .btn-primary:hover {
+      background:#003d82; transform:translate(0, -2px);
+    }
+    .btn-danger {
+      background:rgba(255,68,68,0.2); color:#ff4444;
+      border:1px solid #ff4444;
+    }
+    .btn-danger:hover {
+      background:rgba(255,68,68,0.3);
+    }
+    .form-row {
+      display:grid; grid-template-columns:1fr 1fr; gap:16px;
+    }
+    .profile-field {
+      padding:10px 12px; background:var(--card2);
+      border:1px solid var(--border); border-radius:8px;
+    }
+    .profile-label {
+      font-size:.75rem; color:var(--muted); text-transform:uppercase;
+      letter-spacing:1px; margin-bottom:4px;
+    }
+    .profile-value {
+      font-size:1rem; color:var(--text); font-weight:500;
+    }
+    .alert {
+      padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:.9rem;
+    }
+    .alert-success {
+      background:rgba(0,255,136,0.15); border:1px solid rgba(0,255,136,0.3); color:#00ff88;
+    }
+    .alert-danger {
+      background:rgba(255,68,68,0.15); border:1px solid rgba(255,68,68,0.3); color:#ff4444;
+    }
+    .modal {
+      display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;
+    }
+    .modal.active { display:flex; }
+    .modal-content {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:14px; padding:24px; max-width:400px; width:90%;
+    }
+    .modal-content h3 { margin-bottom:16px; font-size:1.2rem; }
+    .modal-content p { margin-bottom:20px; color:var(--muted); }
+    .modal-buttons { display:flex; gap:12px; justify-content:flex-end; }
+
+    /* Danger Zone styling */
+    .card.danger-zone {
+      border-color:rgba(255,68,68,0.3); background:rgba(255,68,68,0.05);
+    }
+
+    /* Card Group styling */
+    .card-group {
+      margin-bottom:24px;
+    }
+    .card-group-title {
+      font-size:.9rem; font-weight:700; color:var(--text);
+      margin-bottom:12px; text-transform:uppercase; letter-spacing:1px;
+    }
+    .card-group-desc {
+      font-size:.75rem; color:var(--muted); margin-bottom:16px;
+    }
+
+    /* Theme Cards */
+    .theme-grid {
+      display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;
+      margin-bottom:16px;
+    }
+    .theme-card {
+      border:2px solid var(--border); border-radius:12px; padding:16px;
+      background:var(--card); cursor:pointer; transition:all .2s;
+      text-align:center;
+    }
+    .theme-card:hover {
+      border-color:var(--accent); box-shadow:0 4px 12px rgba(0,86,179,0.15);
+    }
+    .theme-card.active {
+      border-color:var(--accent); background:rgba(0,86,179,0.1);
+      box-shadow:0 4px 12px rgba(0,86,179,0.2);
+    }
+    .theme-preview {
+      width:100%; height:40px; border-radius:8px; margin-bottom:12px;
+      border:1px solid var(--border);
+    }
+    .theme-light { background:#ffffff; }
+    .theme-dark { background:#1a1a2e; }
+    .theme-system { background:linear-gradient(90deg, #ffffff 50%, #1a1a2e 50%); }
+    .theme-label {
+      font-weight:600; font-size:.85rem; color:var(--text);
+    }
+    .theme-sublabel {
+      font-size:.7rem; color:var(--muted); margin-top:4px;
+    }
+
+    /* Toggle Switches */
+    .toggle-group {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 0; border-bottom:1px solid var(--border);
+    }
+    .toggle-group:last-child {
+      border-bottom:none;
+    }
+    .toggle-label {
+      font-size:.9rem; font-weight:500; color:var(--text);
+    }
+    .toggle-desc {
+      font-size:.75rem; color:var(--muted); margin-top:2px;
+    }
+    .switch {
+      position:relative; display:inline-block; width:44px; height:24px;
+    }
+    .switch input {
+      opacity:0; width:0; height:0;
+    }
+    .slider {
+      position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0;
+      background-color:#ccc; transition:.3s; border-radius:24px;
+    }
+    .slider:before {
+      position:absolute; content:""; height:20px; width:20px;
+      left:2px; bottom:2px; background-color:#fff;
+      transition:.3s; border-radius:50%;
+    }
+    input:checked + .slider {
+      background-color:var(--accent);
+    }
+    input:checked + .slider:before {
+      transform:translateX(20px);
+    }
+
+    /* Color Palette Cards */
+    .palette-grid {
+      display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;
+      margin-bottom:16px;
+    }
+    .palette-card {
+      border:2px solid var(--border); border-radius:12px; padding:12px;
+      background:var(--card); cursor:pointer; transition:all .2s;
+      text-align:center;
+    }
+    .palette-card:hover {
+      border-color:var(--accent); box-shadow:0 4px 12px rgba(0,86,179,0.15);
+    }
+    .palette-card.active {
+      border-color:var(--accent); background:rgba(0,86,179,0.1);
+      box-shadow:0 4px 12px rgba(0,86,179,0.2);
+    }
+    .palette-preview {
+      display:flex; gap:6px; margin-bottom:12px; justify-content:center;
+      height:32px;
+    }
+    .palette-color {
+      flex:1; border-radius:6px; border:1px solid rgba(0,0,0,0.1);
+    }
+    .palette-name {
+      font-weight:600; font-size:.85rem; color:var(--text);
+    }
+
+    /* Dropdown Grid */
+    .dropdown-grid {
+      display:grid; grid-template-columns:repeat(2, 1fr); gap:16px;
+      margin-bottom:16px;
+    }
+    @media (max-width: 768px) {
+      .dropdown-grid {
+        grid-template-columns:1fr;
+      }
+    }
+
+    /* Save/Reset Buttons */
+    .settings-actions {
+      display:flex; gap:12px; justify-content:flex-end; padding-top:24px;
+      border-top:1px solid var(--border);
+    }
+    .btn-secondary {
+      background:rgba(0,86,179,0.1); color:var(--accent);
+      border:1px solid var(--accent);
+    }
+    .btn-secondary:hover {
+      background:rgba(0,86,179,0.2);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .settings-container {
+        grid-template-columns:1fr; gap:24px;
+      }
+      .sidebar {
+        position:static;
+        margin-bottom:16px;
+      }
+      .nav-tabs {
+        flex-direction:row; gap:8px; flex-wrap:wrap;
+      }
+      .nav-tab {
+        flex:1; min-width:120px;
+      }
+      .theme-grid {
+        grid-template-columns:1fr;
+      }
+      .palette-grid {
+        grid-template-columns:1fr;
+      }
+      .dropdown-grid {
+        grid-template-columns:1fr;
+      }
+      .settings-actions {
+        flex-direction:column-reverse;
+      }
+      .settings-actions .btn {
+        width:100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><i class="bi bi-gear"></i></div>
+      <div class="logo-text">
+        <h1>Decision Analyst</h1>
+        <p>SETTINGS</p>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="/"><i class="bi bi-house"></i> Home</a>
+      <a href="/analytics"><i class="bi bi-bar-chart"></i> Analytics</a>
+      <a href="/settings" class="active"><i class="bi bi-gear"></i> Settings</a>
+    </div>
+  </div>
+
+  <!-- Main Settings Container -->
+  <div class="settings-container">
+    <!-- Left Sidebar Navigation -->
+    <div class="sidebar">
+      <div class="sidebar-title">SETTINGS</div>
+      <div class="nav-tabs">
+        <a class="nav-tab active" onclick="switchTab('profile')" data-tab="profile">
+          <i class="bi bi-person"></i> Profile
+        </a>
+        <a class="nav-tab" onclick="switchTab('security')" data-tab="security">
+          <i class="bi bi-lock"></i> Security
+        </a>
+        <a class="nav-tab" onclick="switchTab('appearance')" data-tab="appearance">
+          <i class="bi bi-palette"></i> Appearance
+        </a>
+        <a class="nav-tab" onclick="switchTab('notifications')" data-tab="notifications">
+          <i class="bi bi-bell"></i> Notifications
+        </a>
+        <a class="nav-tab" onclick="switchTab('analysis')" data-tab="analysis">
+          <i class="bi bi-graph-up"></i> Analysis
+        </a>
+        <a class="nav-tab" onclick="switchTab('api')" data-tab="api">
+          <i class="bi bi-code-square"></i> AI & API
+        </a>
+        <a class="nav-tab" onclick="switchTab('danger')" data-tab="danger">
+          <i class="bi bi-exclamation-triangle" style="color:#ff4444;"></i> Danger Zone
+        </a>
+        <a class="nav-tab" onclick="switchTab('reports')" data-tab="reports">
+          <i class="bi bi-file-text"></i> Reports
+        </a>
+      </div>
+    </div>
+
+    <!-- Right Content Area -->
+    <div class="content">
+      <div id="alertContainer"></div>
+
+      <!-- Profile Section -->
+      <div id="profile" class="section active">
+        <div class="section-title">
+          <i class="bi bi-person"></i> Profile Information
+        </div>
+        <p class="section-desc">Manage your account information and display settings</p>
+        <div class="card">
+          <div class="form-row">
+            <div>
+              <div class="profile-label">Username</div>
+              <div class="profile-field">
+                <div class="profile-value" id="username">—</div>
+              </div>
+            </div>
+            <div>
+              <div class="profile-label">Email</div>
+              <div class="profile-field">
+                <div class="profile-value" id="email">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Section -->
+      <div id="security" class="section">
+        <div class="section-title">
+          <i class="bi bi-lock"></i> Security
+        </div>
+        <p class="section-desc">Update your password and manage security settings</p>
+        <div class="card">
+          <h3>Change Password</h3>
+          <form onsubmit="changePassword(event)">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="currentPwd" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="newPwd" required>
+              </div>
+              <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPwd" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-lock"></i> Update Password
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Appearance Section -->
+      <div id="appearance" class="section">
+        <div class="section-title">
+          <i class="bi bi-palette"></i> Appearance
+        </div>
+        <p class="section-desc">Customize your visual preferences and display settings</p>
+
+        <!-- Theme Selection -->
+        <div class="card-group">
+          <div class="card-group-title"><i class="bi bi-sun"></i> Theme</div>
+          <div class="card-group-desc">Choose between light and dark mode for the interface</div>
+          <div class="theme-grid">
+            <div class="theme-card active" onclick="selectTheme('light')" data-theme="light">
+              <div class="theme-preview theme-light"></div>
+              <div class="theme-label">Light</div>
+              <div class="theme-sublabel">Current</div>
+            </div>
+            <div class="theme-card" onclick="selectTheme('dark')" data-theme="dark">
+              <div class="theme-preview theme-dark"></div>
+              <div class="theme-label">Dark</div>
+              <div class="theme-sublabel">Darker UI</div>
+            </div>
+            <div class="theme-card" onclick="selectTheme('system')" data-theme="system">
+              <div class="theme-preview theme-system"></div>
+              <div class="theme-label">System</div>
+              <div class="theme-sublabel">Auto-detect</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Currency & Locale -->
+        <div class="card-group">
+          <div class="card-group-title"><i class="bi bi-globe"></i> Currency & Locale</div>
+          <div class="card-group-desc">Configure how numbers, dates, and currency are displayed</div>
+          <div class="card">
+            <div class="dropdown-grid">
+              <div class="form-group">
+                <label>Default Currency</label>
+                <select id="currencySelect" onchange="saveAppearance()">
+                  <option value="INR">Indian Rupees (₹)</option>
+                  <option value="USD">US Dollar ($)</option>
+                  <option value="EUR">Euro (€)</option>
+                  <option value="GBP">British Pound (£)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Date Format</label>
+                <select id="dateFormat" onchange="saveAppearance()">
+                  <option value="DD-MM-YYYY">DD-MM-YYYY</option>
+                  <option value="MM-DD-YYYY">MM-DD-YYYY</option>
+                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Number Format</label>
+                <select id="numberFormat" onchange="saveAppearance()">
+                  <option value="indian">Indian Lakhs (1,23,45,678)</option>
+                  <option value="international">International (123,456,789)</option>
+                  <option value="european">European (123.456.789)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Fiscal Year Start</label>
+                <select id="fiscalYear" onchange="saveAppearance()">
+                  <option value="april">April (Standard India)</option>
+                  <option value="january">January</option>
+                  <option value="july">July</option>
+                  <option value="october">October</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Display -->
+        <div class="card">
+          <div class="card-group-title"><i class="bi bi-grid"></i> Dashboard Display</div>
+          <div class="card-group-desc">Control what appears on your FinSight dashboard</div>
+          <div style="margin-top:16px;">
+            <div class="toggle-group">
+              <div>
+                <div class="toggle-label">Show KPI Cards</div>
+                <div class="toggle-desc">Display key metrics at the top</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="showKPI" checked onchange="saveAppearance()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-group">
+              <div>
+                <div class="toggle-label">Show Charts</div>
+                <div class="toggle-desc">Display category and trend visualizations</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="showCharts" checked onchange="saveAppearance()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-group">
+              <div>
+                <div class="toggle-label">Show AI CFO Report</div>
+                <div class="toggle-desc">Display AI-generated financial insights</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="showAI" checked onchange="saveAppearance()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-group">
+              <div>
+                <div class="toggle-label">Compact View</div>
+                <div class="toggle-desc">Reduce spacing and show more data at once</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="compactView" onchange="saveAppearance()">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Color Theme -->
+        <div class="card-group">
+          <div class="card-group-title"><i class="bi bi-palette2"></i> Chart Color Theme</div>
+          <div class="card-group-desc">Select a color palette for all charts and visualizations</div>
+          <div class="card">
+            <div class="palette-grid">
+              <div class="palette-card active" onclick="selectChartTheme('default')" data-theme="default">
+                <div class="palette-preview">
+                  <div class="palette-color" style="background:#0056b3;"></div>
+                  <div class="palette-color" style="background:#00d4ff;"></div>
+                  <div class="palette-color" style="background:#ffeb3b;"></div>
+                </div>
+                <div class="palette-name">Default</div>
+              </div>
+              <div class="palette-card" onclick="selectChartTheme('ocean')" data-theme="ocean">
+                <div class="palette-preview">
+                  <div class="palette-color" style="background:#0066cc;"></div>
+                  <div class="palette-color" style="background:#00b4e6;"></div>
+                  <div class="palette-color" style="background:#66e0ff;"></div>
+                </div>
+                <div class="palette-name">Ocean</div>
+              </div>
+              <div class="palette-card" onclick="selectChartTheme('warm')" data-theme="warm">
+                <div class="palette-preview">
+                  <div class="palette-color" style="background:#e74c3c;"></div>
+                  <div class="palette-color" style="background:#f39c12;"></div>
+                  <div class="palette-color" style="background:#f1c40f;"></div>
+                </div>
+                <div class="palette-name">Warm</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="settings-actions">
+          <button class="btn btn-secondary" onclick="resetAppearance()">
+            <i class="bi bi-arrow-clockwise"></i> Reset to Defaults
+          </button>
+          <button class="btn btn-primary" onclick="saveAllAppearance()">
+            <i class="bi bi-check-lg"></i> Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- Notifications Section -->
+      <div id="notifications" class="section">
+        <div class="section-title">
+          <i class="bi bi-bell"></i> Notifications
+        </div>
+        <p class="section-desc">Manage how you receive notifications</p>
+        <div class="card">
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:10px; font-weight:500;">
+              <input type="checkbox" checked style="width:auto;"> Email notifications on anomalies
+            </label>
+          </div>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:10px; font-weight:500;">
+              <input type="checkbox" checked style="width:auto;"> Weekly spending summary
+            </label>
+          </div>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:10px; font-weight:500;">
+              <input type="checkbox" style="width:auto;"> Marketing emails
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Section -->
+      <div id="analysis" class="section">
+        <div class="section-title">
+          <i class="bi bi-graph-up"></i> Analysis Settings
+        </div>
+        <p class="section-desc">Configure analysis and anomaly detection preferences</p>
+        <div class="card">
+          <h3>Anomaly Detection Sensitivity</h3>
+          <div class="form-group">
+            <label>Sensitivity Level</label>
+            <select>
+              <option value="low">Low - Only major anomalies</option>
+              <option value="medium" selected>Medium - Balanced detection</option>
+              <option value="high">High - All unusual patterns</option>
+            </select>
+          </div>
+          <p style="color:var(--muted); font-size:.85rem; margin-bottom:20px;">Higher sensitivity flags more transactions as anomalies.</p>
+          
+          <h3 style="margin-top:20px;">Data Retention</h3>
+          <div class="form-group">
+            <label>Keep analysis data for</label>
+            <select>
+              <option value="3m">3 months</option>
+              <option value="6m" selected>6 months</option>
+              <option value="1y">1 year</option>
+              <option value="unlimited">Unlimited</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI & API Section -->
+      <div id="api" class="section">
+        <div class="section-title">
+          <i class="bi bi-code-square"></i> AI & API
+        </div>
+        <p class="section-desc">AI model configuration and integration status</p>
+        <div class="card">
+          <h3>AI Integration</h3>
+          <p style="color:var(--muted); margin-bottom:16px;">
+            <i class="bi bi-check-circle" style="color: #4ade80; margin-right: 6px;"></i>
+            Groq AI is built-in and automatically configured. Your transactions are analyzed using advanced AI.
+          </p>
+          <div class="form-group">
+            <label>API Key Status</label>
+            <div style="display:flex; gap:8px;">
+              <input type="password" id="apiKey" placeholder="••••••••••••••••" readonly style="flex:1; background-color: var(--card);">
+              <button class="btn btn-primary" onclick="toggleApiKey()">
+                <i class="bi bi-eye"></i> Show
+              </button>
+            </div>
+          </div>
+          <p style="color: #4ade80; font-size: 0.95rem; margin-top: 12px;">
+            <i class="bi bi-shield-check"></i> API is securely configured and active
+          </p>
+        </div>
+      </div>
+
+      <!-- Danger Zone Section -->
+      <div id="danger" class="section">
+        <div class="section-title">
+          <i class="bi bi-exclamation-triangle"></i> Danger Zone
+        </div>
+        <p class="section-desc">Irreversible actions. Be careful with these operations.</p>
+        <div class="card danger-zone">
+          <h3 style="color:#ff4444;">Delete All Upload History</h3>
+          <p style="color:var(--muted); margin-bottom:16px; font-size:.9rem;">
+            This will permanently delete all your uploaded files and analysis history. This action cannot be undone.
+          </p>
+          <button class="btn btn-danger" onclick="openDeleteModal()">
+            <i class="bi bi-trash"></i> Clear All Upload History
+          </button>
+        </div>
+      </div>
+
+      <!-- Reports Section -->
+      <div id="reports" class="section">
+        <div class="section-title">
+          <i class="bi bi-file-text"></i> Reports
+        </div>
+        <p class="section-desc">Manage your report generation and export settings</p>
+        
+        <!-- Export Format Settings -->
+        <div class="card">
+          <h3>Export Format</h3>
+          <p style="color:var(--muted); margin-bottom:16px;">Choose your default report export format</p>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:10px; font-weight:500;">
+              <input type="radio" name="format" value="pdf" checked style="width:auto;"> PDF Report (Professional format)
+            </label>
+          </div>
+          <div class="form-group">
+            <label style="display:flex; align-items:center; gap:10px; font-weight:500;">
+              <input type="radio" name="format" value="csv" style="width:auto;"> CSV Export (Spreadsheet format)
+            </label>
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px;" onclick="downloadSampleReport()">
+            <i class="bi bi-download"></i> Download Sample Report
+          </button>
+        </div>
+
+        <!-- Past Reports List -->
+        <div class="card" style="margin-top: 20px;">
+          <h3>Your Generated Reports</h3>
+          <p style="color:var(--muted); margin-bottom:16px;">Download or delete your previously generated reports</p>
+          
+          <div id="reportsList" style="max-height: 400px; overflow-y: auto;">
+            <p style="color: var(--muted); text-align: center; padding: 20px;">
+              <i class="bi bi-inbox"></i> Loading your reports...
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <h3><i class="bi bi-exclamation-triangle" style="color:#ff4444;"></i> Are You Sure?</h3>
+      <p>This will permanently delete all your uploaded files and analysis history. This action cannot be undone.</p>
+      <div class="modal-buttons">
+        <button class="btn btn-secondary" onclick="closeDeleteModal()" style="background:rgba(0,86,179,0.15); border:1px solid #0056b3; color:#0056b3;">
+          Cancel
+        </button>
+        <button class="btn btn-danger" onclick="confirmDelete()">
+          Delete All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching logic
+    function switchTab(tabName) {
+      // Hide all sections
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      
+      // Deactivate all tabs
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      
+      // Show selected section
+      document.getElementById(tabName).classList.add('active');
+      
+      // Activate clicked tab
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    }
+
+    // Load user profile info
+    async function loadProfile() {
+      try {
+        document.getElementById('username').textContent = '{{ current_user.username }}';
+        document.getElementById('email').textContent = '{{ current_user.email }}';
+        
+        // Load all appearance settings
+        loadAppearanceSettings();
+        loadApiKey();
+        loadUserReports();
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    }
+
+    // Load all appearance settings from localStorage
+    function loadAppearanceSettings() {
+      // Load theme
+      const theme = localStorage.getItem('theme') || 'light';
+      selectTheme(theme, false);
+      
+      // Load currency & locale
+      document.getElementById('currencySelect').value = localStorage.getItem('defaultCurrency') || 'INR';
+      document.getElementById('dateFormat').value = localStorage.getItem('dateFormat') || 'DD-MM-YYYY';
+      document.getElementById('numberFormat').value = localStorage.getItem('numberFormat') || 'indian';
+      document.getElementById('fiscalYear').value = localStorage.getItem('fiscalYear') || 'april';
+      
+      // Load dashboard display toggles
+      document.getElementById('showKPI').checked = JSON.parse(localStorage.getItem('showKPI') ?? 'true');
+      document.getElementById('showCharts').checked = JSON.parse(localStorage.getItem('showCharts') ?? 'true');
+      document.getElementById('showAI').checked = JSON.parse(localStorage.getItem('showAI') ?? 'true');
+      document.getElementById('compactView').checked = JSON.parse(localStorage.getItem('compactView') ?? 'false');
+      
+      // Load chart theme
+      const chartTheme = localStorage.getItem('chartTheme') || 'default';
+      selectChartTheme(chartTheme, false);
+      
+      // Apply theme to body
+      applyTheme(theme);
+    }
+
+    // Theme selection
+    function selectTheme(themeName, save = true) {
+      // Remove active class from all theme cards
+      document.querySelectorAll('.theme-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      
+      // Add active class to selected card
+      const selectedCard = document.querySelector(`[data-theme="${themeName}"]`);
+      if (selectedCard) {
+        selectedCard.classList.add('active');
+      }
+      
+      if (save) {
+        // Apply theme to document
+        document.documentElement.setAttribute('data-theme', themeName);
+        document.body.setAttribute('data-theme', themeName);
+        localStorage.setItem('theme', themeName);
+        
+        // Dispatch event for other scripts to listen
+        window.dispatchEvent(new CustomEvent('themeChanged', { 
+          detail: { theme: themeName },
+          bubbles: true,
+          composed: true
+        }));
+        
+        const themeLabelMap = {
+          'dark': 'Dark',
+          'light': 'Light',
+          'system': 'System'
+        };
+        showAlert(`Theme changed to ${themeLabelMap[themeName] || themeName}!`, 'success');
+      }
+    }
+
+    // Apply theme to body
+    function applyTheme(themeName) {
+      document.body.setAttribute('data-theme', themeName);
+      document.documentElement.setAttribute('data-theme', themeName);
+      // Dispatch custom event for other scripts to listen to
+      window.dispatchEvent(new CustomEvent('themeChanged', { 
+        detail: { theme: themeName },
+        bubbles: true,
+        composed: true 
+      }));
+    }
+
+    // Chart theme selection
+    function selectChartTheme(themeName, save = true) {
+      // Remove active class from all palette cards
+      document.querySelectorAll('.palette-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      
+      // Add active class to the card with matching data-theme
+      const activeCard = document.querySelector(`.palette-card[data-theme="${themeName}"]`);
+      if (activeCard) {
+        activeCard.classList.add('active');
+      } else {
+        // Fallback: find by theme name in card data
+        document.querySelectorAll('.palette-card').forEach(card => {
+          const dataTheme = card.getAttribute('data-theme');
+          if (dataTheme === themeName) {
+            card.classList.add('active');
+          }
+        });
+      }
+      
+      if (save) {
+        localStorage.setItem('chartTheme', themeName);
+        defineChartColors(themeName);
+      }
+    }
+
+    // Define global chart colors
+    function defineChartColors(theme) {
+      if (theme === 'ocean') {
+        window.chartColors = {
+          primary: '#0066cc',
+          secondary: '#00b4e6',
+          tertiary: '#66e0ff',
+          success: '#00c853',
+          danger: '#d32f2f',
+          warning: '#f9a825'
+        };
+      } else if (theme === 'warm') {
+        window.chartColors = {
+          primary: '#e74c3c',
+          secondary: '#f39c12',
+          tertiary: '#f1c40f',
+          success: '#27ae60',
+          danger: '#c0392b',
+          warning: '#e67e22'
+        };
+      } else {
+        // Default theme
+        window.chartColors = {
+          primary: '#0056b3',
+          secondary: '#00d4ff',
+          tertiary: '#ffeb3b',
+          success: '#4caf50',
+          danger: '#dc2626',
+          warning: '#ff9800'
+        };
+      }
+    }
+
+    // Save appearance settings (for individual changes during session)
+    function saveAppearance() {
+      // Called on individual field changes
+    }
+
+    // Save all appearance settings to server/localStorage
+    async function saveAllAppearance() {
+      try {
+        // Save to localStorage
+        localStorage.setItem('defaultCurrency', document.getElementById('currencySelect').value);
+        localStorage.setItem('dateFormat', document.getElementById('dateFormat').value);
+        localStorage.setItem('numberFormat', document.getElementById('numberFormat').value);
+        localStorage.setItem('fiscalYear', document.getElementById('fiscalYear').value);
+        localStorage.setItem('showKPI', document.getElementById('showKPI').checked);
+        localStorage.setItem('showCharts', document.getElementById('showCharts').checked);
+        localStorage.setItem('showAI', document.getElementById('showAI').checked);
+        localStorage.setItem('compactView', document.getElementById('compactView').checked);
+        
+        // Send to server for persistence
+        const response = await fetch('/api/user-preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currency: document.getElementById('currencySelect').value,
+            date_format: document.getElementById('dateFormat').value,
+            number_format: document.getElementById('numberFormat').value,
+            fiscal_year: document.getElementById('fiscalYear').value,
+            show_kpi: document.getElementById('showKPI').checked,
+            show_charts: document.getElementById('showCharts').checked,
+            show_ai: document.getElementById('showAI').checked,
+            compact_view: document.getElementById('compactView').checked
+          })
+        });
+        
+        showAlert('Appearance settings saved successfully!', 'success');
+      } catch (error) {
+        console.error('Error saving appearance:', error);
+        showAlert('Settings saved locally', 'success');
+      }
+    }
+
+    // Reset to default appearance settings
+    function resetAppearance() {
+      if (confirm('Reset all appearance settings to defaults?')) {
+        // Reset theme
+        selectTheme('light', true);
+        
+        // Reset all dropdowns
+        document.getElementById('currencySelect').value = 'INR';
+        document.getElementById('dateFormat').value = 'DD-MM-YYYY';
+        document.getElementById('numberFormat').value = 'indian';
+        document.getElementById('fiscalYear').value = 'april';
+        
+        // Reset toggles
+        document.getElementById('showKPI').checked = true;
+        document.getElementById('showCharts').checked = true;
+        document.getElementById('showAI').checked = true;
+        document.getElementById('compactView').checked = false;
+        
+        // Reset chart theme
+        selectChartTheme('default', true);
+        
+        // Clear localStorage
+        localStorage.removeItem('defaultCurrency');
+        localStorage.removeItem('dateFormat');
+        localStorage.removeItem('numberFormat');
+        localStorage.removeItem('fiscalYear');
+        localStorage.removeItem('showKPI');
+        localStorage.removeItem('showCharts');
+        localStorage.removeItem('showAI');
+        localStorage.removeItem('compactView');
+        localStorage.removeItem('theme');
+        localStorage.removeItem('chartTheme');
+        
+        showAlert('Reset to default appearance settings', 'success');
+      }
+    }
+
+    // Change password
+    async function changePassword(e) {
+      e.preventDefault();
+      const currentPwd = document.getElementById('currentPwd').value;
+      const newPwd = document.getElementById('newPwd').value;
+      const confirmPwd = document.getElementById('confirmPwd').value;
+
+      if (newPwd !== confirmPwd) {
+        showAlert('Passwords do not match', 'danger');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            current_password: currentPwd,
+            new_password: newPwd,
+            confirm_password: confirmPwd
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('Password changed successfully!', 'success');
+          document.getElementById('currentPwd').value = '';
+          document.getElementById('newPwd').value = '';
+          document.getElementById('confirmPwd').value = '';
+        } else {
+          showAlert(data.message || 'Failed to change password', 'danger');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error changing password', 'danger');
+      }
+    }
+
+    // Load API Key from backend
+    async function loadApiKey() {
+      try {
+        const response = await fetch('/api/ai-config');
+        const data = await response.json();
+        
+        if (data.success) {
+          const apiKeyInput = document.getElementById('apiKey');
+          const statusDiv = document.getElementById('apiStatus');
+          
+          // Store full masked key for toggle functionality
+          apiKeyInput.dataset.maskedKey = data.api_key_masked;
+          apiKeyInput.value = data.api_key_masked;
+          
+          // Show status
+          if (data.is_configured) {
+            if (!statusDiv) {
+              const status = document.createElement('p');
+              status.id = 'apiStatus';
+              status.style.color = '#4ade80';
+              status.style.marginTop = '8px';
+              status.innerHTML = '<i class="bi bi-check-circle"></i> API is configured and active';
+              apiKeyInput.parentElement.parentElement.appendChild(status);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading API key:', error);
+      }
+    }
+
+    // Load user's reports
+    async function loadUserReports() {
+      try {
+        const response = await fetch('/api/reports?per_page=20');
+        const data = await response.json();
+        
+        const reportsList = document.getElementById('reportsList');
+        
+        if (data.success && data.reports.length > 0) {
+          let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+          
+          data.reports.forEach(report => {
+            const date = new Date(report.created_at).toLocaleDateString();
+            const time = new Date(report.created_at).toLocaleTimeString();
+            const sizeKB = (report.file_size / 1024).toFixed(2);
+            
+            html += `
+              <div style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="flex: 1;">
+                  <p style="margin: 0 0 4px 0; font-weight: 600; color: var(--text);">
+                    <i class="bi bi-file-pdf"></i> ${report.report_name}
+                  </p>
+                  <p style="margin: 0; font-size: 0.9rem; color: var(--muted);">
+                    ${date} at ${time} • ${report.export_format.toUpperCase()} • ${sizeKB} KB
+                  </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-sm btn-primary" onclick="downloadUserReport(${report.id}, '${report.report_name}')" title="Download report">
+                    <i class="bi bi-download"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteUserReport(${report.id})" title="Delete report">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          });
+          
+          html += '</div>';
+          reportsList.innerHTML = html;
+        } else {
+          reportsList.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+              <i class="bi bi-inbox" style="font-size: 2rem; color: var(--muted); margin-bottom: 12px;"></i>
+              <p style="color: var(--muted);">No reports generated yet</p>
+              <p style="color: var(--muted); font-size: 0.9rem;">Generate your first report by uploading a file and viewing the Reports page</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading reports:', error);
+        document.getElementById('reportsList').innerHTML = `
+          <p style="color: red; text-align: center;">Error loading reports</p>
+        `;
+      }
+    }
+
+    // Download a report
+    async function downloadUserReport(reportId, reportName) {
+      try {
+        window.location.href = `/api/reports/${reportId}/download`;
+      } catch (error) {
+        console.error('Error downloading report:', error);
+        showAlert('Error downloading report', 'danger');
+      }
+    }
+
+    // Delete a report
+    async function deleteUserReport(reportId) {
+      if (!confirm('Are you sure you want to delete this report?')) return;
+      
+      try {
+        const response = await fetch(`/api/reports/${reportId}`, {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          showAlert('Report deleted successfully', 'success');
+          loadUserReports(); // Reload list
+        } else {
+          showAlert('Error deleting report', 'danger');
+        }
+      } catch (error) {
+        console.error('Error deleting report:', error);
+        showAlert('Error deleting report', 'danger');
+      }
+    }
+
+    // Download sample report
+    function downloadSampleReport() {
+      // This would link to a sample report
+      showAlert('Sample report download coming soon!', 'info');
+    }
+
+    // Show/hide API key
+    function toggleApiKey() {
+      const apiKeyInput = document.getElementById('apiKey');
+      const btn = event.target.closest('.btn');
+      const maskedKey = apiKeyInput.dataset.maskedKey || '••••••••••••••••';
+      
+      if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        btn.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+      } else {
+        apiKeyInput.type = 'password';
+        btn.innerHTML = '<i class="bi bi-eye"></i> Show';
+      }
+    }
+
+    // Show alert
+    function showAlert(message, type) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+      
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = '';
+      container.appendChild(alertDiv);
+
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 5000);
+    }
+
+    // Delete modal functions
+    function openDeleteModal() {
+      document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').classList.remove('active');
+    }
+
+    async function confirmDelete() {
+      try {
+        const response = await fetch('/api/uploads/all', {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          closeDeleteModal();
+          showAlert('All uploads deleted successfully', 'success');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        } else {
+          showAlert(data.message || 'Failed to delete uploads', 'danger');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error deleting uploads', 'danger');
+      }
+    }
+
+    // Close modal on outside click
+    document.getElementById('deleteModal').addEventListener('click', (e) => {
+      if (e.target.id === 'deleteModal') {
+        closeDeleteModal();
+      }
+    });
+
+    window.addEventListener('load', () => {
+      loadProfile();
+      const chartTheme = localStorage.getItem('chartTheme') || 'default';
+      defineChartColors(chartTheme);
+    });
+  </script>
+</body>
+</html>

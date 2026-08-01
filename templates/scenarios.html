@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+
+{% block title %}What-If Scenarios - Decision Analyst{% endblock %}
+
+{% block content %}
+<style>
+  .scenarios-container {
+    background: #f5f7fa;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  body[data-theme="dark"] .scenarios-container {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+  }
+
+  .scenarios-header {
+    background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    color: white;
+    padding: 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  body[data-theme="dark"] .scenarios-header {
+    background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+  }
+
+  .scenarios-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #6b7280;
+    transition: all 0.2s;
+  }
+
+  body[data-theme="dark"] .tab-btn {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: #cbd5e1 !important;
+  }
+
+  .tab-btn.active {
+    background: #ea580c;
+    border-color: #ea580c;
+    color: white;
+  }
+
+  .tab-btn:hover {
+    border-color: #ea580c;
+    color: #ea580c;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  .scenario-card {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+  }
+
+  body[data-theme="dark"] .scenario-card {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+  }
+
+  .scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 12px;
+  }
+
+  .scenario-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  body[data-theme="dark"] .scenario-name {
+    color: #f1f5f9 !important;
+  }
+
+  .scenario-type {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #fed7aa;
+    color: #92400e;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  body[data-theme="dark"] .scenario-type {
+    background: #7c2d12 !important;
+    color: #fed7aa !important;
+  }
+
+  .scenario-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin: 12px 0;
+  }
+
+  .detail-item {
+    font-size: 13px;
+  }
+
+  .detail-label {
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  body[data-theme="dark"] .detail-label {
+    color: #cbd5e1 !important;
+  }
+
+  .detail-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ea580c;
+  }
+
+  body[data-theme="dark"] .detail-value {
+    color: #fb923c !important;
+  }
+
+  .form-section {
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+  }
+
+  body[data-theme="dark"] .form-section {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+  }
+
+  .form-section h3 {
+    color: #1f2937;
+    margin-bottom: 16px;
+  }
+
+  body[data-theme="dark"] .form-section h3 {
+    color: #f1f5f9 !important;
+  }
+
+  .form-group label {
+    color: #374151;
+    font-weight: 500;
+  }
+
+  body[data-theme="dark"] .form-group label {
+    color: #cbd5e1 !important;
+  }
+
+  .form-group input,
+  .form-group select {
+    background: white;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
+  }
+
+  body[data-theme="dark"] .form-group input,
+  body[data-theme="dark"] .form-group select {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .suggestion-card {
+    background: #fffbeb;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #ea580c;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  body[data-theme="dark"] .suggestion-card {
+    background: #7c2d12 !important;
+    border-left-color: #fb923c !important;
+  }
+
+  .suggestion-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateX(4px);
+  }
+
+  .suggestion-title {
+    font-weight: 600;
+    color: #b45309;
+    margin-bottom: 4px;
+  }
+
+  body[data-theme="dark"] .suggestion-title {
+    color: #fed7aa !important;
+  }
+
+  .suggestion-desc {
+    font-size: 13px;
+    color: #92400e;
+  }
+
+  body[data-theme="dark"] .suggestion-desc {
+    color: #fde68a !important;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: #6b7280;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  body[data-theme="dark"] .empty-state {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+  }
+
+  .impact-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #dcfce7;
+    color: #15803d;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  body[data-theme="dark"] .impact-badge {
+    background: #1b4332 !important;
+    color: #86efac !important;
+  }
+
+  .scenario-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+</style>
+
+<div class="scenarios-container">
+  <!-- Header -->
+  <div class="scenarios-header">
+    <h1>What-If Scenario Analysis</h1>
+    <p>Simulate different financial decisions to see their impact on your finances</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="scenarios-tabs">
+    <button class="tab-btn active" onclick="switchTab('suggestions')"><i class="bi bi-lightbulb me-1"></i>Suggestions</button>
+    <button class="tab-btn" onclick="switchTab('create')"><i class="bi bi-plus-lg me-1"></i>Create Custom</button>
+    <button class="tab-btn" onclick="switchTab('saved')"><i class="bi bi-list-check me-1"></i>My Scenarios</button>
+    <button class="tab-btn" onclick="switchTab('compare')"><i class="bi bi-bar-chart me-1"></i>Compare</button>
+  </div>
+
+  <!-- SUGGESTIONS TAB -->
+  <div id="suggestions" class="tab-content active">
+    <div class="form-section">
+      <h3>Pre-Calculated Scenario Suggestions</h3>
+      <p style="color: #6b7280; margin-bottom: 16px;">Click on any suggestion to create and explore it:</p>
+      <div id="suggestionsContainer">Loading suggestions...</div>
+    </div>
+  </div>
+
+  <!-- CREATE CUSTOM TAB -->
+  <div id="create" class="tab-content">
+    <div class="form-section">
+      <h3>Create Custom Scenario</h3>
+      <form id="createScenarioForm">
+        <div class="form-group mb-3">
+          <label>Scenario Name</label>
+          <input type="text" class="form-control" name="name" required>
+        </div>
+        <div class="form-group mb-3">
+          <label>Scenario Type</label>
+          <select class="form-control" name="scenario_type" onchange="updateParameterFields()" required>
+            <option value="">Select Type</option>
+            <option value="budget">Budget Reduction</option>
+            <option value="income">Income Increase</option>
+            <option value="expense">Specific Expense Reduction</option>
+            <option value="savings">Savings Rate Increase</option>
+          </select>
+        </div>
+        <div id="parameterFields"></div>
+        <div class="form-group mb-3">
+          <label>Description (optional)</label>
+          <textarea class="form-control" name="description" rows="3"></textarea>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="submitScenario()">Create Scenario</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SAVED SCENARIOS TAB -->
+  <div id="saved" class="tab-content">
+    <div id="savedScenariosContainer">Loading scenarios...</div>
+  </div>
+
+  <!-- COMPARE TAB -->
+  <div id="compare" class="tab-content">
+    <div class="form-section">
+      <h3>Compare Scenarios</h3>
+      <p style="color: #6b7280; margin-bottom: 16px;">Select scenarios from your saved list to compare their impact:</p>
+      <div id="compareContainer">
+        <p style="color: #6b7280;">Create some scenarios first to compare them!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+    
+    // Load content if needed
+    if (tabName === 'suggestions') loadSuggestions();
+    if (tabName === 'saved') loadSavedScenarios();
+    if (tabName === 'compare') loadCompareView();
+  }
+
+  function updateParameterFields() {
+    const type = document.querySelector('select[name="scenario_type"]').value;
+    const container = document.getElementById('parameterFields');
+    
+    if (type === 'budget') {
+      container.innerHTML = `
+        <div class="form-group mb-3">
+          <label>Reduction Percentage (%)</label>
+          <input type="number" class="form-control" name="reduction_percent" min="0" max="100" step="1" required>
+        </div>
+      `;
+    } else if (type === 'income') {
+      container.innerHTML = `
+        <div class="form-group mb-3">
+          <label>Income Increase Percentage (%)</label>
+          <input type="number" class="form-control" name="increase_percent" min="0" max="100" step="1" required>
+        </div>
+      `;
+    } else if (type === 'expense') {
+      container.innerHTML = `
+        <div class="form-group mb-3">
+          <label>Monthly Reduction Amount (₹)</label>
+          <input type="number" class="form-control" name="monthly_amount" step="0.01" required>
+        </div>
+      `;
+    } else if (type === 'savings') {
+      container.innerHTML = `
+        <div class="form-row">
+          <div class="form-group mb-3">
+            <label>Current Savings Rate (%)</label>
+            <input type="number" class="form-control" name="current_rate" min="0" max="100" step="0.1" required>
+          </div>
+          <div class="form-group mb-3">
+            <label>Target Savings Rate (%)</label>
+            <input type="number" class="form-control" name="target_rate" min="0" max="100" step="0.1" required>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function loadSuggestions() {
+    fetch('/api/scenarios/suggestions')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('suggestionsContainer');
+        if (data.success && data.data.length > 0) {
+          container.innerHTML = data.data.map((sugg, i) => `
+            <div class="suggestion-card" onclick="createFromSuggestion(${i})">
+              <div class="suggestion-title">${sugg.title}</div>
+              <div class="suggestion-desc">${sugg.description}</div>
+              <div style="margin-top: 8px; font-size: 12px; color: #b45309; font-weight: 600;">
+                ${sugg.estimated_savings || sugg.estimated_impact}
+              </div>
+            </div>
+          `).join('');
+        }
+      });
+  }
+
+  function createFromSuggestion(index) {
+    fetch('/api/scenarios/suggestions')
+      .then(r => r.json())
+      .then(data => {
+        const sugg = data.data[index];
+        const scenario = {
+          name: sugg.title,
+          scenario_type: sugg.scenario_type,
+          description: sugg.description,
+          parameters: sugg.parameters
+        };
+        
+        fetch('/api/scenarios', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(scenario)
+        })
+        .then(r => r.json())
+        .then(result => {
+          if (result.success) {
+            alert('Scenario created! Check "My Scenarios" tab.');
+            loadSavedScenarios();
+          }
+        });
+      });
+  }
+
+  function submitScenario() {
+    const form = document.getElementById('createScenarioForm');
+    const formData = new FormData(form);
+    const type = formData.get('scenario_type');
+    const data = {
+      name: formData.get('name'),
+      scenario_type: type,
+      description: formData.get('description'),
+      parameters: {}
+    };
+    
+    if (type === 'budget') {
+      data.parameters.reduction_percent = parseFloat(formData.get('reduction_percent'));
+      data.parameters.category = 'all';
+    } else if (type === 'income') {
+      data.parameters.increase_percent = parseFloat(formData.get('increase_percent'));
+    } else if (type === 'expense') {
+      data.parameters.monthly_amount = parseFloat(formData.get('monthly_amount'));
+    } else if (type === 'savings') {
+      data.parameters.current_rate = parseFloat(formData.get('current_rate'));
+      data.parameters.target_rate = parseFloat(formData.get('target_rate'));
+    }
+    
+    fetch('/api/scenarios', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+      if (result.success) {
+        form.reset();
+        switchTab('saved');
+      } else {
+        alert('Error: ' + result.message);
+      }
+    });
+  }
+
+  function loadSavedScenarios() {
+    fetch('/api/scenarios')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('savedScenariosContainer');
+        if (data.success && data.data.scenarios.length > 0) {
+          container.innerHTML = data.data.scenarios.map(scenario => `
+            <div class="scenario-card">
+              <div class="scenario-header">
+                <h4 class="scenario-name">${scenario.name}</h4>
+                <span class="scenario-type">${scenario.scenario_type}</span>
+              </div>
+              <div class="scenario-details">
+                <div class="detail-item">
+                  <div class="detail-label">Projected Annual Savings</div>
+                  <div class="detail-value">₹${Math.abs(scenario.projected_savings).toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Impact</div>
+                  <div class="impact-badge">${scenario.impact_percentage.toFixed(1)}%</div>
+                </div>
+              </div>
+              <div class="scenario-actions">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewScenario(${scenario.id})">View Details</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteScenario(${scenario.id})">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<div class="empty-state">No scenarios yet. Create one to get started!</div>';
+        }
+      });
+  }
+
+  function viewScenario(scenarioId) {
+    fetch(`/api/scenarios/${scenarioId}`)
+      .then(r => r.json())
+      .then(data => {
+        alert(`Scenario: ${data.data.name}\n\nAnnual Savings: ₹${Math.abs(data.data.projected_savings).toLocaleString('en-IN', {maximumFractionDigits: 0})}\nImpact: ${data.data.impact_percentage.toFixed(1)}%`);
+      });
+  }
+
+  function deleteScenario(scenarioId) {
+    if (confirm('Delete this scenario?')) {
+      fetch(`/api/scenarios/${scenarioId}`, {method: 'DELETE'})
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) loadSavedScenarios();
+        });
+    }
+  }
+
+  function loadCompareView() {
+    fetch('/api/scenarios')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('compareContainer');
+        if (data.success && data.data.scenarios.length > 1) {
+          container.innerHTML = `
+            <div class="form-group mb-3">
+              <p style="color: #6b7280; margin-bottom: 12px;">Select scenarios to compare:</p>
+              ${data.data.scenarios.map((s, i) => `
+                <label><input type="checkbox" value="${s.id}"> ${s.name}</label><br>
+              `).join('')}
+              <button class="btn btn-primary mt-3" onclick="performComparison()">Compare Selected</button>
+            </div>
+          `;
+        } else {
+          container.innerHTML = '<p style="color: #6b7280;">Create at least 2 scenarios to compare.</p>';
+        }
+      });
+  }
+
+  function performComparison() {
+    const checked = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(el => parseInt(el.value));
+    if (checked.length < 2) {
+      alert('Select at least 2 scenarios to compare');
+      return;
+    }
+    
+    fetch('/api/scenarios/compare', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({scenario_ids: checked})
+    })
+    .then(r => r.json())
+    .then(data => {
+      const comparison = data.data;
+      const table = comparison.scenarios.map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td>₹${Math.abs(s.projected_savings).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+          <td>${s.impact_percentage.toFixed(1)}%</td>
+        </tr>
+      `).join('');
+      
+      alert(`Comparison Results:\n\nBest Savings: Scenario ${comparison.best_savings}\nBest Impact: Scenario ${comparison.best_impact}`);
+    });
+  }
+
+  // Load suggestions on page load
+  document.addEventListener('DOMContentLoaded', loadSuggestions);
+</script>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Decision Analyst{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-3">
+                    AI-Powered Financial <span style="color: #ffeb3b;">Intelligence</span>
+                </h1>
+                <p class="lead mb-4">
+                    Transform transaction data into actionable financial insights. Advanced AI categorization, anomaly detection, and predictive analysis—all in seconds.
+                </p>
+                <div class="d-grid gap-2 d-sm-flex">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('upload_page') }}" class="btn btn-light btn-lg px-4">
+                        <i class="bi bi-cloud-arrow-up"></i> Upload Data
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">
+                        <i class="bi bi-person-plus"></i> Get Started
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center d-none d-lg-block">
+                <i class="bi bi-graph-up-arrow" style="font-size: 8rem; color: rgba(255, 255, 255, 0.3);"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Overview -->
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm mb-5">
+        <div class="card-body p-4 p-lg-5">
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-8">
+                    <h3 class="fw-bold mb-3" style="color: #0056b3;">About Decision Analyst</h3>
+                    <p class="mb-3 text-muted">
+                        Decision Analyst harnesses advanced AI to transform messy financial data into clear, strategic insights. We automate the entire workflow—from data ingestion to intelligent categorization—so you can focus on what matters: making smarter financial decisions.
+                    </p>
+                    <p class="mb-0 text-muted">
+                        Built for financial professionals, analysts, and enterprises seeking speed, accuracy, and transparency. Get actionable intelligence ready for export, visualization, and deeper analysis.
+                    </p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="bg-light rounded-3 p-4 h-100">
+                        <h6 class="fw-bold mb-3" style="color: #0056b3;">Core Capabilities</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Multi-format file ingestion with auto-detection</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Advanced AI-powered transaction enrichment</li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success"></i> Real-time anomaly & pattern detection</li>
+                            <li><i class="bi bi-check-circle text-success"></i> Enterprise-ready exports & API access</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="card border-0 shadow-lg mb-5" style="overflow: hidden;">
+        <div class="card-body p-5" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+            <h2 class="mb-5 text-center fw-bold" style="color: #0056b3;">
+                <i class="bi bi-gear-fill"></i> How It Works
+            </h2>
+            <div class="row g-4">
+                <!-- Step 1 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="text-center p-4 h-100" style="border-radius: 15px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 8px 25px rgba(0,86,179,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 4px 15px rgba(0,86,179,0.3);">
+                            <i class="bi bi-cloud-arrow-up-fill" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); color: white; font-weight: 700; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">1</div>
+                        <h5 class="fw-bold mb-3" style="color: #0056b3;">Upload Data</h5>
+                        <p class="text-muted mb-0">Import your financial transactions from any source. Supports CSV, Excel, and large batch files with intelligent format detection.</p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="text-center p-4 h-100" style="border-radius: 15px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 8px 25px rgba(0,86,179,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 4px 15px rgba(0,86,179,0.3);">
+                            <i class="bi bi-magic" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); color: white; font-weight: 700; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">2</div>
+                        <h5 class="fw-bold mb-3" style="color: #0056b3;">Clean Data</h5>
+                        <p class="text-muted mb-0">Automatic data validation, normalization, and enrichment. Our engine detects columns, standardizes formats, and fixes inconsistencies instantly.</p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="text-center p-4 h-100" style="border-radius: 15px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 8px 25px rgba(0,86,179,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 4px 15px rgba(0,86,179,0.3);">
+                            <i class="bi bi-tags-fill" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); color: white; font-weight: 700; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">3</div>
+                        <h5 class="fw-bold mb-3" style="color: #0056b3;">Categorize</h5>
+                        <p class="text-muted mb-0">Precision AI-powered categorization with customizable rules. Our advanced models understand context and intent, delivering consistent results you can trust.</p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="text-center p-4 h-100" style="border-radius: 15px; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-10px)'; this.style.boxShadow='0 8px 25px rgba(0,86,179,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'">
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 4px 15px rgba(0,86,179,0.3);">
+                            <i class="bi bi-graph-up-arrow" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); color: white; font-weight: 700; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">4</div>
+                        <h5 class="fw-bold mb-3" style="color: #0056b3;">Analyze</h5>
+                        <p class="text-muted mb-0">Get actionable insights instantly. Anomaly detection, spending trends, financial recommendations, and professional exports ready for dashboards and reports.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Flow Indicator -->
+            <div class="text-center mt-5 pt-4" style="border-top: 2px dashed #dee2e6;">
+                <p class="text-muted mb-2">
+                    <i class="bi bi-lightning-charge"></i> <strong>Lightning Fast:</strong> Complete processing in under 30 seconds
+                </p>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-lock-fill"></i> <strong>Enterprise-Grade Security:</strong> Your data remains private and encrypted
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Benefits -->
+    <div class="row mb-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-left-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-star"></i> Key Benefits</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><i class="bi bi-check-circle text-success"></i> <strong>Faster Insights:</strong> From raw data to analysis in under 30 seconds</li>
+                        <li class="mb-3"><i class="bi bi-check-circle text-success"></i> <strong>Zero Manual Work:</strong> Fully automated processing, error detection, and cleaning</li>
+                        <li class="mb-3"><i class="bi bi-check-circle text-success"></i> <strong>Intelligent Categorization:</strong> Context-aware AI that learns and improves over time</li>
+                        <li class="mb-3"><i class="bi bi-check-circle text-success"></i> <strong>Export-Ready Results:</strong> Download processed data in multiple formats for your own analysis</li>
+                        <li><i class="bi bi-check-circle text-success"></i> <strong>Transparent & Auditable:</strong> Clear logic, explainable recommendations, audit-ready reports</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    {% if current_user.is_authenticated %}
+    <div class="card border-0 shadow-lg mb-4" style="background: linear-gradient(135deg, rgba(0, 86, 179, 0.08) 0%, rgba(248, 249, 250, 1) 100%);">
+        <div class="card-body text-center p-5">
+            <h3 class="fw-bold mb-3">Ready to Transform Your Data?</h3>
+            <p class="lead mb-4">Start analyzing your financial transactions with AI-powered intelligence.</p>
+            <a href="/upload" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-cloud-arrow-up"></i> Analyze Now
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- CTA Section -->
+    {% if not current_user.is_authenticated %}
+    <div class="card border-0 shadow-lg" style="background: linear-gradient(135deg, rgba(239, 43, 45, 0.1) 0%, rgba(26, 26, 26, 0.05) 100%);">
+        <div class="card-body text-center p-5">
+            <h3 class="fw-bold mb-3">Start Making Smarter Financial Decisions</h3>
+            <p class="lead mb-4">Experience the power of AI-driven financial intelligence. Zero setup, zero hassle—just results.</p>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-person-plus"></i> Create Free Account
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

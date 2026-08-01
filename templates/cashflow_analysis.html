@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}Cash Flow Analysis - Decision Analyst{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-5 justify-content-between">
+        <div>
+            <h1 class="display-5 fw-bold mb-2" style="color: #0056b3;">Cash Flow Analysis</h1>
+            <p class="lead text-muted">Advanced cash flow forecasting and health indicators</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="refreshCashflowAnalysis()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-5" style="display: none;">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted">Analyzing cash flow...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span id="error-message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content" style="display: none;">
+        <!-- Health Score & Runway -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg h-100" style="border-left: 5px solid #0056b3;">
+                    <div class="card-body text-center p-5">
+                        <h6 class="text-muted mb-3"><i class="bi bi-heart-pulse"></i> Cash Flow Health</h6>
+                        <div class="mb-3">
+                            <div class="display-3 fw-bold" id="health-score">--</div>
+                            <small class="text-muted" id="health-grade">N/A</small>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="health-progress" class="progress-bar bg-success" style="width: 0%;" role="progressbar"></div>
+                        </div>
+                        <p id="health-summary" class="text-muted mt-3 mb-0 small"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg h-100" style="border-left: 5px solid #dc3545;">
+                    <div class="card-body text-center p-5">
+                        <h6 class="text-muted mb-3"><i class="bi bi-hourglass-end"></i> Cash Runway</h6>
+                        <div class="mb-3">
+                            <div class="display-3 fw-bold" id="runway-months">--</div>
+                            <small class="text-muted" id="runway-status">Unknown</small>
+                        </div>
+                        <div id="runway-badge" class="badge bg-secondary p-2" style="font-size: 0.9rem;">Status</div>
+                        <p id="runway-rec" class="text-muted mt-3 mb-0 small"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg h-100" style="border-left: 5px solid #28a745;">
+                    <div class="card-body text-center p-5">
+                        <h6 class="text-muted mb-3"><i class="bi bi-cash-coin"></i> Current Position</h6>
+                        <div class="mb-3">
+                            <div class="display-5 fw-bold" id="net-position">₹0</div>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div id="position-bar" class="progress-bar bg-info" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inflow & Outflow Analysis -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-arrow-down-circle" style="color: #28a745;"></i> Inflow Analysis</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted">Total Inflow</small>
+                                <p class="h5 mb-0 text-success" id="total-inflow">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Monthly Average</small>
+                                <p class="h5 mb-0 text-success" id="avg-inflow">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Frequency</small>
+                                <p class="h5 mb-0" id="inflow-freq">0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Stability</small>
+                                <p class="h5 mb-0"><span id="inflow-stability" class="badge bg-info">Unknown</span></p>
+                            </div>
+                            <div class="col-12 border-top pt-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted">Consistency Score</small>
+                                    <span id="inflow-consistency" class="h6 mb-0">0%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div id="inflow-consistency-bar" class="progress-bar bg-success" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-arrow-up-circle" style="color: #dc3545;"></i> Outflow Analysis</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted">Total Outflow</small>
+                                <p class="h5 mb-0 text-danger" id="total-outflow">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Monthly Average</small>
+                                <p class="h5 mb-0 text-danger" id="avg-outflow">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Frequency</small>
+                                <p class="h5 mb-0" id="outflow-freq">0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Stability</small>
+                                <p class="h5 mb-0"><span id="outflow-stability" class="badge bg-warning">Unknown</span></p>
+                            </div>
+                            <div class="col-12 border-top pt-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted">Consistency Score</small>
+                                    <span id="outflow-consistency" class="h6 mb-0">0%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div id="outflow-consistency-bar" class="progress-bar bg-danger" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Cash Flow & Volatility -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-graph-up-arrow"></i> Monthly Net Flow</h6>
+                        <div class="h4 fw-bold mb-2" id="monthly-net">₹0</div>
+                        <p id="net-trend-text" class="text-muted small mb-0">Neutral trend</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-lightning-bolt"></i> Volatility</h6>
+                        <div class="mb-3">
+                            <div class="h5 mb-2" id="volatility-level">Medium</div>
+                            <div class="progress" style="height: 8px;">
+                                <div id="volatility-bar" class="progress-bar bg-warning" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <p id="predictability-text" class="text-muted small mb-0">Medium predictability</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-ratio"></i> Flow Ratio</h6>
+                        <div class="h4 fw-bold mb-2" id="flow-ratio">0.00</div>
+                        <p id="ratio-text" class="text-muted small mb-0">Inflow to Outflow ratio</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6-Month Forecast -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h6 class="mb-4"><i class="bi bi-calendar-month"></i> 6-Month Cash Position Forecast</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Projected Inflow</th>
+                                <th>Projected Outflow</th>
+                                <th>Monthly Net</th>
+                                <th>Projected Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecast-table">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seasonal Patterns -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h6 class="mb-4"><i class="bi bi-calendar-week"></i> Seasonal Patterns (by Month)</h6>
+                <div id="seasonal-patterns"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body[data-theme="dark"] .card {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .table {
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .table th {
+    border-bottom-color: #334155 !important;
+}
+
+body[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: #0f172a !important;
+}
+</style>
+
+<script>
+// Format number with Indian comma spacing
+function formatIndianCurrency(amount) {
+    const num = parseFloat(amount) || 0;
+    const parts = num.toFixed(2).split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+    
+    // Format integer part with Indian commas
+    let formatted = integerPart.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return '₹' + formatted + '.' + decimalPart;
+}
+
+function refreshCashflowAnalysis() {
+    loadCashflowAnalysis();
+}
+
+async function loadCashflowAnalysis() {
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('content');
+    const error = document.getElementById('error');
+    
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    error.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/cashflow-analysis');
+        if (!response.ok) throw new Error('Failed to load analysis');
+        
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Analysis failed');
+        
+        const data = result.data;
+        displayCashflowAnalysis(data);
+        
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    } catch (err) {
+        console.error('Error:', err);
+        error.style.display = 'block';
+        document.getElementById('error-message').textContent = err.message || 'Unable to load analysis';
+        loading.style.display = 'none';
+    }
+}
+
+function displayCashflowAnalysis(data) {
+    // Health Score
+    const health = data.health_indicators || {};
+    const healthScore = health.overall_health_score || 0;
+    document.getElementById('health-score').textContent = healthScore;
+    document.getElementById('health-grade').textContent = `Grade: ${health.grade || 'N/A'}`;
+    document.getElementById('health-progress').style.width = healthScore + '%';
+    document.getElementById('health-summary').textContent = health.summary || 'No data';
+    
+    // Runway
+    const runway = data.cash_runway || {};
+    document.getElementById('runway-months').textContent = runway.runway_months || '∞';
+    document.getElementById('runway-status').textContent = runway.runway_status || 'Unknown';
+    const runwayBadge = document.getElementById('runway-badge');
+    runwayBadge.className = 'badge ' + {
+        'critical': 'bg-danger',
+        'warning': 'bg-warning',
+        'healthy': 'bg-success'
+    }[runway.runway_status] || 'bg-secondary' + ' p-2';
+    runwayBadge.textContent = (runway.runway_status || 'Unknown').toUpperCase();
+    document.getElementById('runway-rec').textContent = runway.recommendation || 'No recommendation';
+    
+    // Current Position
+    const current = data.current_cash_position || {};
+    const posStatus = current.net_position_status || 'Unknown';
+    const formattedPosition = formatIndianCurrency(current.net_position || 0);
+    document.getElementById('net-position').innerHTML = formattedPosition + '<br><small class="text-muted" style="font-size: 0.5em;">' + posStatus + '</small>';
+    
+    // Inflow Analysis
+    const inflow = data.inflow_analysis || {};
+    document.getElementById('total-inflow').textContent = formatIndianCurrency(inflow.total_inflow || 0);
+    document.getElementById('avg-inflow').textContent = formatIndianCurrency(inflow.average_monthly || 0);
+    document.getElementById('inflow-freq').textContent = (inflow.frequency || 0) + ' transactions';
+    document.getElementById('inflow-stability').textContent = (inflow.stability || 'Unknown').toUpperCase();
+    document.getElementById('inflow-consistency').textContent = (inflow.consistency_score || 0).toFixed(1) + '%';
+    document.getElementById('inflow-consistency-bar').style.width = Math.min(100, (inflow.consistency_score || 0)) + '%';
+    
+    // Outflow Analysis  
+    const outflow = data.outflow_analysis || {};
+    document.getElementById('total-outflow').textContent = formatIndianCurrency(outflow.total_outflow || 0);
+    document.getElementById('avg-outflow').textContent = formatIndianCurrency(outflow.average_monthly || 0);
+    document.getElementById('outflow-freq').textContent = (outflow.frequency || 0) + ' transactions';
+    document.getElementById('outflow-stability').textContent = (outflow.stability || 'Unknown').toUpperCase();
+    document.getElementById('outflow-consistency').textContent = (outflow.consistency_score || 0).toFixed(1) + '%';
+    document.getElementById('outflow-consistency-bar').style.width = Math.min(100, (outflow.consistency_score || 0)) + '%';
+    
+    // Net Cash Flow
+    const netFlow = data.net_cash_flow || {};
+    document.getElementById('monthly-net').textContent = formatIndianCurrency(netFlow.average_monthly_net || 0);
+    const trendClass = (netFlow.net_trend === 'positive' ? 'text-success' : netFlow.net_trend === 'negative' ? 'text-danger' : 'text-muted');
+    document.getElementById('net-trend-text').className = 'text-muted small mb-0 ' + trendClass;
+    document.getElementById('net-trend-text').textContent = (netFlow.net_trend || 'Neutral') + ' trend';
+    
+    // Volatility
+    const volatility = data.volatility_analysis || {};
+    document.getElementById('volatility-level').textContent = (volatility.volatility_level || 'Unknown').toUpperCase();
+    const volatilityPercent = Math.min(100, Math.max(0, (volatility.overall_volatility || 0) / 10));
+    document.getElementById('volatility-bar').style.width = volatilityPercent + '%';
+    document.getElementById('predictability-text').textContent = (volatility.predictability || 'Unknown') + ' predictability';
+    
+    // Flow Ratio
+    document.getElementById('flow-ratio').textContent = (netFlow.inflow_to_outflow_ratio || 0).toFixed(2);
+    
+    // Forecast
+    const forecast = data.forecast_6_months || [];
+    const forecastRows = forecast.map(f => {
+        const inflowFormatted = formatIndianCurrency(f.projected_inflow || 0);
+        const outflowFormatted = formatIndianCurrency(f.projected_outflow || 0);
+        const netFlowFormatted = formatIndianCurrency(Math.abs(f.projected_net_flow || 0));
+        const balanceFormatted = formatIndianCurrency(f.projected_balance || 0);
+        return `
+        <tr>
+            <td><strong>Month ${f.month}</strong></td>
+            <td class="text-success">${inflowFormatted}</td>
+            <td class="text-danger">${outflowFormatted}</td>
+            <td class="${f.projected_net_flow >= 0 ? 'text-success' : 'text-danger'}">
+                ${f.projected_net_flow >= 0 ? '+' : '-'}${netFlowFormatted.replace('₹', '')}
+            </td>
+            <td class="fw-bold">
+                <span class="${f.projected_balance >= 0 ? 'text-success' : 'text-danger'}">
+                    ${balanceFormatted}
+                </span>
+            </td>
+            <td>
+                <span class="badge ${f.status === 'positive' ? 'bg-success' : f.status === 'negative' ? 'bg-danger' : 'bg-secondary'}">
+                    ${f.status || 'Unknown'}
+                </span>
+            </td>
+        </tr>
+    `;
+    }).join('');
+    const forecastTableEl = document.getElementById('forecast-table');
+    if (forecastTableEl) {
+        forecastTableEl.innerHTML = forecastRows || '<tr><td colspan="6" class="text-center text-muted">No forecast data</td></tr>';
+    }
+    
+    // Seasonal Patterns
+    const seasonal = data.seasonal_patterns || {};
+    const seasonalHTML = Object.entries(seasonal).map(([month, info]) => {
+        const avgFormatted = formatIndianCurrency(info.average_transaction || 0).replace('₹', '');
+        const totalFormatted = formatIndianCurrency(info.total || 0).replace('₹', '');
+        return `
+        <div class="mb-3 p-3" style="border-radius: 8px; background: rgba(5, 86, 179, 0.05);">
+            <div class="d-flex justify-content-between mb-2">
+                <strong>${month}</strong>
+                <span class="text-muted">Avg: ₹${avgFormatted}</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar" style="width: ${Math.min(100, ((info.total || 0) / 5000) * 100)}%;"></div>
+            </div>
+            <small class="text-muted d-block mt-1">${info.transaction_count || 0} transactions • Total: ₹${totalFormatted}</small>
+        </div>
+    `;
+    }).join('');
+    const seasonalPatternsEl = document.getElementById('seasonal-patterns');
+    if (seasonalPatternsEl) {
+        seasonalPatternsEl.innerHTML = seasonalHTML || '<p class="text-muted">No seasonal data</p>';
+    }
+}
+
+// Load analysis on page load
+document.addEventListener('DOMContentLoaded', loadCashflowAnalysis);
+</script>
+{% endblock %}

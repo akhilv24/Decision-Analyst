@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Health - Decision Analyst{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-5 justify-content-between">
+        <div>
+            <h1 class="display-5 fw-bold mb-2" style="color: #0056b3;">Financial Health Dashboard</h1>
+            <p class="lead text-muted">Comprehensive analysis of your financial ratios and health indicators</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="refreshAnalysis()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-5" style="display: none;">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted">Analyzing your financial data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span id="error-message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content" style="display: none;">
+        <!-- Overall Health Score -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-lg h-100" style="border-left: 5px solid #0056b3;">
+                    <div class="card-body text-center p-5">
+                        <h6 class="text-muted mb-3"><i class="bi bi-heart-pulse"></i> Overall Health Score</h6>
+                        <div class="mb-3">
+                            <div class="display-3 fw-bold" id="health-score" style="color: #0056b3;">--</div>
+                            <small class="text-muted" id="health-grade">N/A</small>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="health-progress" class="progress-bar" style="width: 0%;" role="progressbar"></div>
+                        </div>
+                        <p id="health-summary" class="text-muted mt-3 mb-0 small"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-body p-4">
+                        <h6 class="mb-4"><i class="bi bi-lightning-charge"></i> Key Recommendations</h6>
+                        <div id="recommendations" class="list-unstyled"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Income & Expenses Overview -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-arrow-down-circle" style="color: #28a745;"></i> Income Analysis</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted">Total Income</small>
+                                <p class="h5 mb-0" id="total-income">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Monthly Average</small>
+                                <p class="h5 mb-0" id="monthly-income">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Average Transaction</small>
+                                <p class="h5 mb-0" id="avg-income">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Frequency</small>
+                                <p class="h5 mb-0" id="income-freq">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-arrow-up-circle" style="color: #dc3545;"></i> Expense Analysis</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted">Total Expenses</small>
+                                <p class="h5 mb-0" id="total-expenses">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Monthly Average</small>
+                                <p class="h5 mb-0" id="monthly-expenses">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Average Transaction</small>
+                                <p class="h5 mb-0" id="avg-expense">₹0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Frequency</small>
+                                <p class="h5 mb-0" id="expense-freq">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Financial Ratios -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-percent"></i> Expense-to-Income Ratio</h6>
+                        <div class="mb-3">
+                            <div class="display-4 fw-bold" id="exp-ratio">0%</div>
+                            <small class="text-muted d-block mb-2" id="exp-ratio-status">Status</small>
+                            <div class="progress" style="height: 8px;">
+                                <div id="exp-ratio-bar" class="progress-bar" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <p id="exp-ratio-interp" class="text-muted small mb-0"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-credit-card"></i> Debt-to-Income Ratio</h6>
+                        <div class="mb-3">
+                            <div class="display-4 fw-bold" id="debt-ratio">0%</div>
+                            <small class="text-muted d-block mb-2" id="debt-ratio-status">Status</small>
+                            <div class="progress" style="height: 8px;">
+                                <div id="debt-ratio-bar" class="progress-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <p id="debt-ratio-interp" class="text-muted small mb-0"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-piggy-bank"></i> Savings Rate</h6>
+                        <div class="mb-3">
+                            <div class="display-4 fw-bold" id="savings-rate">0%</div>
+                            <small class="text-muted d-block mb-2" id="savings-status">Status</small>
+                            <div class="progress" style="height: 8px;">
+                                <div id="savings-bar" class="progress-bar bg-success" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <p id="savings-interp" class="text-muted small mb-0"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Breakdown -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-pie-chart"></i> Expense Breakdown by Category</h6>
+                        <div id="category-breakdown" style="max-height: 400px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-calendar-range"></i> Period Comparison</h6>
+                        <div id="period-comparison"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body[data-theme="dark"] .card {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .progress {
+    background-color: #0f172a !important;
+}
+</style>
+
+<script>
+// Format number with Indian comma spacing
+function formatIndianCurrency(amount) {
+    const num = parseFloat(amount) || 0;
+    const parts = num.toFixed(2).split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+    
+    // Format integer part with Indian commas
+    let formatted = integerPart.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return '₹' + formatted + '.' + decimalPart;
+}
+
+function refreshAnalysis() {
+    loadRatioAnalysis();
+}
+
+async function loadRatioAnalysis() {
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('content');
+    const error = document.getElementById('error');
+    
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    error.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/ratio-analysis');
+        if (!response.ok) throw new Error('Failed to load analysis');
+        
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Analysis failed');
+        
+        const data = result.data;
+        displayRatioAnalysis(data);
+        
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    } catch (err) {
+        console.error('Error:', err);
+        error.style.display = 'block';
+        document.getElementById('error-message').textContent = err.message || 'Unable to load analysis';
+        loading.style.display = 'none';
+    }
+}
+
+function displayRatioAnalysis(data) {
+    // Health Score
+    const health = data.cash_flow_health;
+    const score = health.overall_score || 0;
+    document.getElementById('health-score').textContent = score;
+    document.getElementById('health-grade').textContent = `Grade: ${health.grade || 'N/A'}`;
+    document.getElementById('health-progress').style.width = score + '%';
+    document.getElementById('health-summary').innerHTML = health.recommendations?.join('<br>') || 'No data';
+    
+    // Income Stats
+    const income = data.income_stats;
+    document.getElementById('total-income').textContent = formatIndianCurrency(income.total_income || 0);
+    document.getElementById('monthly-income').textContent = formatIndianCurrency(income.average_monthly_income || 0);
+    document.getElementById('avg-income').textContent = formatIndianCurrency(income.average_income || 0);
+    document.getElementById('income-freq').textContent = (income.income_frequency || 0) + ' transactions';
+    
+    // Expense Stats
+    const expenses = data.expense_stats;
+    document.getElementById('total-expenses').textContent = formatIndianCurrency(expenses.total_expenses || 0);
+    document.getElementById('monthly-expenses').textContent = formatIndianCurrency(expenses.average_monthly_expenses || 0);
+    document.getElementById('avg-expense').textContent = formatIndianCurrency(expenses.average_expense || 0);
+    document.getElementById('expense-freq').textContent = (expenses.expense_frequency || 0) + ' transactions';
+    
+    // Ratios
+    const ratios = data.ratios;
+    
+    // Expense-to-Income
+    const expRatio = ratios.expense_to_income_ratio;
+    document.getElementById('exp-ratio').textContent = (expRatio.percentage || 0).toFixed(1) + '%';
+    document.getElementById('exp-ratio-status').textContent = expRatio.status || 'unknown';
+    document.getElementById('exp-ratio-bar').style.width = Math.min(100, (expRatio.percentage || 0)) + '%';
+    document.getElementById('exp-ratio-bar').className = 'progress-bar ' + (expRatio.status === 'healthy' ? 'bg-success' : expRatio.status === 'caution' ? 'bg-warning' : 'bg-danger');
+    document.getElementById('exp-ratio-interp').textContent = expRatio.interpretation || 'No data';
+    
+    // Debt-to-Income
+    const debtRatio = ratios.debt_to_income_ratio;
+    document.getElementById('debt-ratio').textContent = (debtRatio.percentage || 0).toFixed(1) + '%';
+    document.getElementById('debt-ratio-status').textContent = debtRatio.status || 'unknown';
+    document.getElementById('debt-ratio-bar').style.width = Math.min(100, (debtRatio.percentage || 0)) + '%';
+    document.getElementById('debt-ratio-bar').className = 'progress-bar ' + (debtRatio.status === 'healthy' ? 'bg-success' : debtRatio.status === 'caution' ? 'bg-warning' : 'bg-danger');
+    document.getElementById('debt-ratio-interp').textContent = debtRatio.interpretation || 'No data';
+    
+    // Savings Rate
+    const savingsRate = ratios.savings_rate;
+    document.getElementById('savings-rate').textContent = (savingsRate.percentage || 0).toFixed(1) + '%';
+    document.getElementById('savings-status').textContent = savingsRate.status || 'unknown';
+    document.getElementById('savings-bar').style.width = Math.min(100, (savingsRate.percentage || 0)) + '%';
+    document.getElementById('savings-interp').textContent = savingsRate.interpretation || 'No data';
+    
+    // Category Breakdown
+    const categories = data.category_breakdown || {};
+    const categoryHTML = Object.entries(categories)
+        .slice(0, 10)
+        .map(([cat, info]) => `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <strong>${cat}</strong>
+                    <span class="text-muted">${info.percentage || 0}%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-info" style="width: ${info.percentage || 0}%;"></div>
+                </div>
+                <small class="text-muted d-block mt-1">₹${(info.amount || 0).toFixed(2)}</small>
+            </div>
+        `).join('');
+    document.getElementById('category-breakdown').innerHTML = categoryHTML || '<p class="text-muted">No category data</p>';
+    
+    // Period Comparison
+    const periods = data.period_details || {};
+    const periodHTML = Object.entries(periods)
+        .map(([period, info]) => `
+            <div class="mb-3 pb-3 border-bottom">
+                <div class="d-flex justify-content-between mb-2">
+                    <strong>${period}</strong>
+                    <span class="badge bg-${info.net > 0 ? 'success' : info.net < 0 ? 'danger' : 'secondary'}">
+                        ₹${(info.net || 0).toFixed(2)}
+                    </span>
+                </div>
+                <div class="row g-2 small text-muted">
+                    <div class="col-6">Income: <strong class="text-success">₹${(info.income || 0).toFixed(2)}</strong></div>
+                    <div class="col-6">Expenses: <strong class="text-danger">₹${(info.expenses || 0).toFixed(2)}</strong></div>
+                </div>
+            </div>
+        `).join('');
+    document.getElementById('period-comparison').innerHTML = periodHTML || '<p class="text-muted">No period data</p>';
+}
+
+// Load analysis on page load
+document.addEventListener('DOMContentLoaded', loadRatioAnalysis);
+</script>
+{% endblock %}

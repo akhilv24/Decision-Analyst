@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Decision Analyst{% endblock %}
+
+{% block content %}
+<div class="reports-container py-4">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h2 class="mb-1">
+                    <i class="bi bi-file-earmark-text me-2" style="color: var(--accent);"></i>
+                    Past Reports
+                </h2>
+                <p class="text-muted">View all your uploaded files and analysis history</p>
+            </div>
+            <div class="col-lg-4 text-end">
+                <a href="/upload" class="btn btn-primary" style="background-color: var(--accent); border-color: var(--accent);">
+                    <i class="bi bi-cloud-arrow-up me-2"></i> Upload New File
+                </a>
+            </div>
+        </div>
+
+        <!-- Reports Table -->
+        <div class="card shadow-sm" style="border: none; border-radius: 12px;">
+            <div class="card-body p-0">
+                <div id="reportsLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading your reports...</p>
+                </div>
+
+                <div id="reportsContent" style="display: none;">
+                    <div id="emptyState" class="text-center py-5" style="display: none;">
+                        <div style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;">
+                            <i class="bi bi-inbox"></i>
+                        </div>
+                        <h5 class="text-muted">No reports yet</h5>
+                        <p class="text-muted mb-3">Start by uploading a file to create your first report</p>
+                        <a href="/upload" class="btn btn-primary" style="background-color: var(--accent); border-color: var(--accent);">
+                            <i class="bi bi-cloud-arrow-up me-2"></i> Upload Your First File
+                        </a>
+                    </div>
+
+                    <table id="reportsTable" class="table table-hover mb-0" style="display: none;">
+                        <thead style="background-color: #f8f9fa; border-bottom: 2px solid #e5e7eb;">
+                            <tr>
+                                <th style="color: var(--text); font-weight: 600;">File Name</th>
+                                <th style="color: var(--text); font-weight: 600;">Upload Date</th>
+                                <th style="color: var(--text); font-weight: 600;">Records</th>
+                                <th style="color: var(--text); font-weight: 600;">Size</th>
+                                <th style="color: var(--text); font-weight: 600;">Date Range</th>
+                                <th style="color: var(--text); font-weight: 600;">Total Amount</th>
+                                <th style="color: var(--text); font-weight: 600;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsList">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mt-4" id="statsRow" style="display: none;">
+            <div class="col-md-3">
+                <div class="card shadow-sm" style="border: none; border-radius: 12px;">
+                    <div class="card-body">
+                        <div style="color: var(--text-muted, #6b7280); font-size: 0.875rem; margin-bottom: 0.5rem;">Total Reports</div>
+                        <div style="font-size: 1.875rem; font-weight: 700; color: var(--accent);" id="totalReports">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm" style="border: none; border-radius: 12px;">
+                    <div class="card-body">
+                        <div style="color: var(--text-muted, #6b7280); font-size: 0.875rem; margin-bottom: 0.5rem;">Total Records</div>
+                        <div style="font-size: 1.875rem; font-weight: 700; color: var(--accent);" id="totalRecords">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .reports-container {
+        background-color: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+    }
+
+    .card {
+        background-color: var(--card);
+        border: 1px solid #e5e7eb;
+    }
+
+    .table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: background-color 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 86, 179, 0.05);
+    }
+
+    .table td {
+        color: var(--text);
+        padding: 1rem;
+        vertical-align: middle;
+    }
+
+    .btn-load {
+        background-color: var(--accent);
+        border-color: var(--accent);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 86, 179, 0.2);
+    }
+
+    .btn-load:hover {
+        background-color: #004494;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 86, 179, 0.3);
+    }
+
+    .file-name {
+        font-weight: 500;
+        color: var(--accent);
+        word-break: break-word;
+    }
+
+    .text-muted {
+        color: #9ca3af;
+    }
+</style>
+
+<script>
+    // Load reports on page load
+    console.log('Reports page loaded');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM ready, loading reports...');
+        loadReports();
+    });
+
+    function loadReports() {
+        console.log('loadReports() called');
+        
+        fetch('/api/get-reports')
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('API response:', data);
+                document.getElementById('reportsLoading').style.display = 'none';
+                document.getElementById('reportsContent').style.display = 'block';
+
+                if (data.success) {
+                    const reports = data.reports || [];
+                    console.log(`Got ${reports.length} reports`);
+                    
+                    if (reports.length === 0) {
+                        console.log('No reports found, showing empty state');
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('reportsTable').style.display = 'none';
+                        document.getElementById('statsRow').style.display = 'none';
+                    } else {
+                        console.log('Showing reports table');
+                        document.getElementById('emptyState').style.display = 'none';
+                        document.getElementById('reportsTable').style.display = 'block';
+                        document.getElementById('statsRow').style.display = 'flex';
+
+                        // Populate table
+                        let tbody = document.getElementById('reportsList');
+                        tbody.innerHTML = '';
+
+                        let totalRecords = 0;
+                        reports.forEach(function(report) {
+                            totalRecords += report.record_count || 0;
+
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>
+                                    <span class="file-name" title="${report.filename}">
+                                        <i class="bi bi-file-earmark-csv me-2"></i>${report.filename}
+                                    </span>
+                                </td>
+                                <td>${report.upload_date}</td>
+                                <td>
+                                    <span class="badge" style="background-color: var(--accent); color: white; font-weight: 600;">
+                                        ${report.record_count.toLocaleString()} records
+                                    </span>
+                                </td>
+                                <td>${report.file_size}</td>
+                                <td>
+                                    <small class="text-muted">${report.date_range}</small>
+                                </td>
+                                <td>
+                                    <strong style="color: var(--text);">${report.total_amount}</strong>
+                                </td>
+                                <td>
+                                    <button class="btn-load" onclick="loadReportAnalysis(${report.id})">
+                                        <i class="bi bi-arrow-right"></i> View
+                                    </button>
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+
+                        // Update stats
+                        document.getElementById('totalReports').textContent = reports.length;
+                        document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
+                    }
+                } else {
+                    console.error('Error loading reports:', data.message);
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('reportsTable').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                
+                document.getElementById('reportsLoading').style.display = 'none';
+                document.getElementById('reportsContent').style.display = 'block';
+                
+                let errorMsg = 'Unable to load reports: ' + error.message;
+                let tbody = document.getElementById('reportsList');
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-5">${errorMsg}</td></tr>`;
+                document.getElementById('reportsTable').style.display = 'block';
+                document.getElementById('emptyState').style.display = 'none';
+            });
+    }
+
+    function loadReportAnalysis(uploadId) {
+        console.log('Loading upload:', uploadId);
+        
+        fetch('/api/set-upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ upload_id: uploadId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Upload set, redirecting to finsight');
+                window.location.href = '/finsight';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading report. Please try again.');
+            });
+    }
+</script>
+{% endblock %}

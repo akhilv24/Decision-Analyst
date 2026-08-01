@@ -1,0 +1,67 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+instance/*.db
+instance/*.sqlite3
+instance/*.sqlite
+static/uploads/*
+!static/uploads/.gitkeep*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Flask
+instance/
+.webassets-cache
+.env
+*.env
+
+# Uploads
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Exports
+static/uploads/exports/*
+!static/uploads/exports/.gitkeep
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

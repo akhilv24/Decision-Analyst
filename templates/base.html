@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Decision Analyst - Personal Finance Decision Support System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Dark Mode Styles -->
+    <style>
+      :root {
+        --bg-light: #ffffff;
+        --bg-dark: #0f172a;
+        --card-light: #f8fbff;
+        --card-dark: #1e293b;
+        --text-light: #1f2937;
+        --text-dark: #f1f5f9;
+        --border-light: rgba(0,86,179,0.12);
+        --border-dark: rgba(148,163,184,0.2);
+      }
+
+      body[data-theme="light"] {
+        --bg: var(--bg-light);
+        --card: var(--card-light);
+        --text: var(--text-light);
+        --border: var(--border-light);
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      body[data-theme="dark"] {
+        --bg: var(--bg-dark);
+        --card: var(--card-dark);
+        --text: var(--text-dark);
+        --border: var(--border-dark);
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      /* === GLOBAL DARK MODE - PROFESSIONAL STYLING === */
+      body[data-theme="dark"],
+      body[data-theme="dark"] * {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+      }
+
+      /* Background & Text - HIGH CONTRAST */
+      body[data-theme="dark"] {
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+      }
+
+      /* Navbar & Header */
+      body[data-theme="dark"] .navbar,
+      body[data-theme="dark"] .da-navbar {
+        background-color: #1a2640 !important;
+        border-bottom-color: rgba(0,86,179,0.4) !important;
+      }
+
+      body[data-theme="dark"] .navbar-brand,
+      body[data-theme="dark"] .da-logo {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+      }
+
+      body[data-theme="dark"] .nav-link,
+      body[data-theme="dark"] .navbar-nav .nav-link {
+        color: #cbd5e1 !important;
+        font-weight: 500 !important;
+      }
+
+      body[data-theme="dark"] .nav-link:hover,
+      body[data-theme="dark"] .navbar-nav .nav-link:hover {
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] .nav-link.active {
+        color: #00d4ff !important;
+        font-weight: 600 !important;
+      }
+
+      /* Cards & Containers */
+      body[data-theme="dark"] .card {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #f1f5f9 !important;
+      }
+
+      body[data-theme="dark"] .card-header {
+        background-color: #334155 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] .card-body {
+        color: #e2e8f0 !important;
+      }
+
+      /* Forms & Inputs */
+      body[data-theme="dark"] .form-control,
+      body[data-theme="dark"] .form-select,
+      body[data-theme="dark"] input[type="text"],
+      body[data-theme="dark"] input[type="email"],
+      body[data-theme="dark"] input[type="password"],
+      body[data-theme="dark"] input[type="number"],
+      body[data-theme="dark"] input[type="date"],
+      body[data-theme="dark"] textarea,
+      body[data-theme="dark"] select {
+        background-color: #334155 !important;
+        border-color: rgba(0,86,179,0.4) !important;
+        color: #f1f5f9 !important;
+      }
+
+      body[data-theme="dark"] .form-control::placeholder,
+      body[data-theme="dark"] textarea::placeholder {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .form-control:focus,
+      body[data-theme="dark"] .form-select:focus {
+        background-color: #334155 !important;
+        border-color: #0056b3 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 212, 255, 0.2) !important;
+      }
+
+      /* Buttons */
+      body[data-theme="dark"] .btn-primary {
+        background-color: #0056b3 !important;
+        border-color: #0056b3 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+      }
+
+      body[data-theme="dark"] .btn-primary:hover {
+        background-color: #00d4ff !important;
+        border-color: #00d4ff !important;
+        color: #0f172a !important;
+      }
+
+      body[data-theme="dark"] .btn-outline-light {
+        color: #f1f5f9 !important;
+        border-color: #f1f5f9 !important;
+      }
+
+      body[data-theme="dark"] .btn-outline-light:hover {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+      }
+
+      body[data-theme="dark"] .da-btn-primary {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 600 !important;
+      }
+
+      body[data-theme="dark"] .da-btn-primary:hover {
+        background-color: #00d4ff !important;
+        color: #0f172a !important;
+      }
+
+      body[data-theme="dark"] .btn-secondary {
+        background-color: #475569 !important;
+        border-color: #475569 !important;
+        color: #f1f5f9 !important;
+      }
+
+      body[data-theme="dark"] .btn-secondary:hover {
+        background-color: #64748b !important;
+        border-color: #64748b !important;
+      }
+
+      /* Text & Colors - HIGH CONTRAST */
+      body[data-theme="dark"] h1,
+      body[data-theme="dark"] h2,
+      body[data-theme="dark"] h3,
+      body[data-theme="dark"] h4,
+      body[data-theme="dark"] h5,
+      body[data-theme="dark"] h6 {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+      }
+
+      body[data-theme="dark"] p,
+      body[data-theme="dark"] span,
+      body[data-theme="dark"] li {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] .text-muted {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .text-dark {
+        color: #f1f5f9 !important;
+      }
+
+      body[data-theme="dark"] strong,
+      body[data-theme="dark"] b {
+        color: #ffffff !important;
+      }
+
+      /* Borders & Dividers */
+      body[data-theme="dark"] .border,
+      body[data-theme="dark"] .border-top,
+      body[data-theme="dark"] .border-bottom,
+      body[data-theme="dark"] .border-start,
+      body[data-theme="dark"] .border-end {
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* Alerts */
+      body[data-theme="dark"] .alert {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #f1f5f9 !important;
+      }
+
+      body[data-theme="dark"] .alert-danger {
+        background-color: rgba(220, 38, 38, 0.2) !important;
+        border-color: #ff4444 !important;
+        color: #ffb3b3 !important;
+      }
+
+      body[data-theme="dark"] .alert-success {
+        background-color: rgba(74, 222, 128, 0.2) !important;
+        border-color: #4ade80 !important;
+        color: #bbf7d0 !important;
+      }
+
+      body[data-theme="dark"] .alert-warning {
+        background-color: rgba(250, 204, 21, 0.2) !important;
+        border-color: #fbbf24 !important;
+        color: #fed7aa !important;
+      }
+
+      body[data-theme="dark"] .alert-info {
+        background-color: rgba(0, 86, 179, 0.2) !important;
+        border-color: #0056b3 !important;
+        color: #93c5e2 !important;
+      }
+
+      /* Tables */
+      body[data-theme="dark"] .table {
+        color: #e2e8f0 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* === COMPREHENSIVE DASHBOARD DARK MODE === */
+      /* White containers to dark */
+      body[data-theme="dark"] div[style*="background: white"],
+      body[data-theme="dark"] div[style*="background:white"],
+      body[data-theme="dark"] [style*="background-color: white"],
+      body[data-theme="dark"] [style*="background-color:white"] {
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+      }
+
+      /* Light gray backgrounds */
+      body[data-theme="dark"] div[style*="background: #f5f7fa"],
+      body[data-theme="dark"] div[style*="background:#f5f7fa"],
+      body[data-theme="dark"] div[style*="background: #f3f4f6"],
+      body[data-theme="dark"] div[style*="background: #f9fafb"] {
+        background-color: #0f172a !important;
+      }
+
+      /* Summary/KPI Cards */
+      body[data-theme="dark"] .kpi-card,
+      body[data-theme="dark"] [class*="summary"],
+      body[data-theme="dark"] [class*="metric"],
+      body[data-theme="dark"] [class*="stat"] {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #e2e8f0 !important;
+      }
+
+      /* Chart containers */
+      body[data-theme="dark"] .chart-container,
+      body[data-theme="dark"] canvas {
+        background-color: #1e293b !important;
+      }
+
+      /* All table elements in dark mode */
+      body[data-theme="dark"] table {
+        background-color: #1e293b !important;
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] table thead {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] table tbody tr {
+        border-color: #334155 !important;
+      }
+
+      body[data-theme="dark"] table tbody tr:hover {
+        background-color: #334155 !important;
+      }
+
+      body[data-theme="dark"] table td,
+      body[data-theme="dark"] table th {
+        color: #e2e8f0 !important;
+        border-color: #334155 !important;
+      }
+
+      /* Override text colors in dark mode */
+      body[data-theme="dark"] [style*="color: #333"],
+      body[data-theme="dark"] [style*="color:#333"],
+      body[data-theme="dark"] [style*="color: #666"],
+      body[data-theme="dark"] [style*="color:#666"] {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] .table thead {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: rgba(0,86,179,0.1) !important;
+      }
+
+      body[data-theme="dark"] .table-hover > tbody > tr:hover {
+        background-color: rgba(0,86,179,0.2) !important;
+      }
+
+      body[data-theme="dark"] .table th {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+      }
+
+      body[data-theme="dark"] .table td {
+        color: #e2e8f0 !important;
+      }
+
+      /* Dropdowns */
+      body[data-theme="dark"] .dropdown-menu {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] .dropdown-item {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] .dropdown-item:hover,
+      body[data-theme="dark"] .dropdown-item:focus {
+        background-color: rgba(0, 86, 179, 0.3) !important;
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] .dropdown-divider {
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* Footer */
+      body[data-theme="dark"] .da-footer,
+      body[data-theme="dark"] footer {
+        background-color: #1a2640 !important;
+        border-top-color: rgba(0,86,179,0.3) !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .da-footer a,
+      body[data-theme="dark"] footer a {
+        color: #00d4ff !important;
+      }
+
+      /* Links */
+      body[data-theme="dark"] a {
+        color: #00d4ff !important;
+        text-decoration: none !important;
+      }
+
+      body[data-theme="dark"] a:hover {
+        color: #ffffff !important;
+        text-decoration: underline !important;
+      }
+
+      /* Badge */
+      body[data-theme="dark"] .badge {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+      }
+
+      /* Modal */
+      body[data-theme="dark"] .modal-content {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .modal-header {
+        border-color: rgba(0,86,179,0.3) !important;
+        background-color: #334155 !important;
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] .modal-header .btn-close {
+        filter: invert(1) !important;
+      }
+
+      body[data-theme="dark"] .modal-footer {
+        border-color: rgba(0,86,179,0.3) !important;
+        background-color: #1a2640 !important;
+      }
+
+      body[data-theme="dark"] .btn-close {
+        filter: invert(1) !important;
+      }
+
+      /* AGGRESSIVE: Override any white backgrounds */
+      body[data-theme="dark"] .bg-light,
+      body[data-theme="dark"] .bg-white {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Override light colored elements */
+      body[data-theme="dark"] [class*="bg-light"],
+      body[data-theme="dark"] [class*="bg-white"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* FORCE override inline white background styles - CRITICAL */
+      body[data-theme="dark"] *[style*="background: white"],
+      body[data-theme="dark"] *[style*="background: #fff"],
+      body[data-theme="dark"] *[style*="background: #ffffff"],
+      body[data-theme="dark"] *[style*="background-color: white"],
+      body[data-theme="dark"] *[style*="background-color: #fff"],
+      body[data-theme="dark"] *[style*="linear-gradient(135deg, #f8f9fa"],
+      body[data-theme="dark"] *[style*="linear-gradient(135deg, #ffffff"] {
+        background: #1e293b !important;
+        background-color: #1e293b !important;
+      }
+
+      /* Override card containers for home page */
+      body[data-theme="dark"] .card {
+        background-color: #1e293b !important;
+      }
+
+      body[data-theme="dark"] .card-body {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure all step cards and content are dark */
+      body[data-theme="dark"] .card-body > *,
+      body[data-theme="dark"] .card-body div,
+      body[data-theme="dark"] .card-body p {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Hero section headings and text */
+      body[data-theme="dark"] .card-body h2,
+      body[data-theme="dark"] .card-body h3,
+      body[data-theme="dark"] .card-body h4,
+      body[data-theme="dark"] .card-body h5 {
+        color: #e2e8f0 !important;
+      }
+
+      /* List items in dark mode */
+      body[data-theme="dark"] ul li {
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure bg-light is completely dark */
+      body[data-theme="dark"] .bg-light {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Home page section overrides */
+      body[data-theme="dark"] section h3 {
+        color: #e2e8f0 !important;
+      }
+
+      /* Key Benefits and similar sections */
+      body[data-theme="dark"] .list-unstyled li {
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure text-muted is readable in dark mode */
+      body[data-theme="dark"] .text-muted {
+        color: #cbd5e1 !important;
+      }
+
+      /* Override color styles that are blue specific */
+      body[data-theme="dark"] [style*="color: #0056b3"],
+      body[data-theme="dark"] [style*="color:#0056b3"] {
+        color: #7dc3ff !important;
+      }
+
+      /* Icon text in dark sections */
+      body[data-theme="dark"] .bi {
+        color: inherit !important;
+      }
+
+      /* All containers should be transparent background */
+      body[data-theme="dark"] .container,
+      body[data-theme="dark"] .container-fluid {
+        background-color: transparent !important;
+      }
+
+      /* Main content must be dark */
+      body[data-theme="dark"] main {
+        background-color: #0f172a !important;
+      }
+
+      /* Shadow adjustments for dark mode */
+      body[data-theme="dark"] .shadow,
+      body[data-theme="dark"] .shadow-sm,
+      body[data-theme="dark"] .shadow-lg {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+      }
+
+      /* Gradient overrides for dark background cards */
+      body[data-theme="dark"] [style*="linear-gradient"] {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+      }
+
+      /* Ensure all text inside cards is readable */
+      body[data-theme="dark"] .card p,
+      body[data-theme="dark"] .card span,
+      body[data-theme="dark"] .card h6 {
+        color: #cbd5e1 !important;
+      }
+
+      /* Specific color fix for headings with #0056b3 color inline style */
+      body[data-theme="dark"] h3[style*="color: #0056b3"],
+      body[data-theme="dark"] h4[style*="color: #0056b3"],
+      body[data-theme="dark"] h5[style*="color: #0056b3"],
+      body[data-theme="dark"] h6[style*="color: #0056b3"] {
+        color: #7dc3ff !important;
+      }
+
+      /* Step cards in "How It Works" section */
+      body[data-theme="dark"] .text-center.p-4[style*="background: white"],
+      body[data-theme="dark"] .text-center.p-4[style*="background-color: white"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* ALL centered cards with white backgrounds */
+      body[data-theme="dark"] .text-center {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .text-center p,
+      body[data-theme="dark"] .text-center h5,
+      body[data-theme="dark"] .text-center span {
+        color: #cbd5e1 !important;
+      }
+
+      /* Colored box sections (like "Core Capabilities") */
+      body[data-theme="dark"] .bg-light.rounded-3,
+      body[data-theme="dark"] .rounded-3[style*="background-color: white"],
+      body[data-theme="dark"] [class*="rounded"][style*="background: white"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Feature icons color */
+      body[data-theme="dark"] .bi-check-circle {
+        color: #4ade80 !important;
+      }
+
+      /* Ensure Key Benefits section is dark */
+      body[data-theme="dark"] [class*="benefit"],
+      body[data-theme="dark"] [class*="feature"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* === REPORTS PAGE DARK MODE === */
+      /* Report headers and titles */
+      body[data-theme="dark"] [class*="report"],
+      body[data-theme="dark"] [class*="statement"],
+      body[data-theme="dark"] [class*="analysis"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Report header backgrounds (blue headers) */
+      body[data-theme="dark"] .card-header[style*="background"],
+      body[data-theme="dark"] [style*="background: linear-gradient(to right, #0056b3"],
+      body[data-theme="dark"] [style*="background: linear-gradient(135deg, #0056b3"] {
+        background: linear-gradient(to right, #004080, #0056b3) !important;
+        color: #ffffff !important;
+      }
+
+      /* Table styling for reports */
+      body[data-theme="dark"] table,
+      body[data-theme="dark"] .table {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] table thead,
+      body[data-theme="dark"] .table thead {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] table th,
+      body[data-theme="dark"] .table th {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] table tbody tr,
+      body[data-theme="dark"] .table tbody tr {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.2) !important;
+      }
+
+      body[data-theme="dark"] table tbody tr:hover,
+      body[data-theme="dark"] .table tbody tr:hover {
+        background-color: #334155 !important;
+      }
+
+      body[data-theme="dark"] table td,
+      body[data-theme="dark"] .table td {
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.2) !important;
+      }
+
+      /* Audit Highlights section */
+      body[data-theme="dark"] [class*="audit"],
+      body[data-theme="dark"] [class*="highlight"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* AI Insight Summary (cyan/teal section) */
+      body[data-theme="dark"] [class*="insight"],
+      body[data-theme="dark"] [class*="summary"] {
+        background-color: rgba(0, 180, 200, 0.1) !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0, 180, 200, 0.3) !important;
+      }
+
+      /* Metric cards and key figures */
+      body[data-theme="dark"] [class*="metric"],
+      body[data-theme="dark"] [class*="figure"],
+      body[data-theme="dark"] [class*="stat"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Report buttons and controls */
+      body[data-theme="dark"] .btn-outline-primary {
+        color: #7dc3ff !important;
+        border-color: #7dc3ff !important;
+      }
+
+      body[data-theme="dark"] .btn-outline-primary:hover {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+      }
+
+      /* Monthly/Quarterly/Annual buttons */
+      body[data-theme="dark"] .btn-sm[class*="outline"],
+      body[data-theme="dark"] button[class*="months"],
+      body[data-theme="dark"] button[class*="quarter"],
+      body[data-theme="dark"] button[class*="year"] {
+        background-color: transparent !important;
+        color: #7dc3ff !important;
+        border-color: #7dc3ff !important;
+      }
+
+      body[data-theme="dark"] .btn-sm[class*="outline"]:hover,
+      body[data-theme="dark"] button[class*="months"]:hover,
+      body[data-theme="dark"] button[class*="quarter"]:hover,
+      body[data-theme="dark"] button[class*="year"]:hover {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+      }
+
+      /* Active button state */
+      body[data-theme="dark"] .btn.active,
+      body[data-theme="dark"] .btn:active {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+        border-color: #0056b3 !important;
+      }
+
+      /* Report date and metadata */
+      body[data-theme="dark"] [class*="date"],
+      body[data-theme="dark"] [class*="period"],
+      body[data-theme="dark"] [class*="meta"] {
+        color: #cbd5e1 !important;
+      }
+
+      /* Blockquotes and highlighted sections */
+      body[data-theme="dark"] blockquote,
+      body[data-theme="dark"] [class*="note"],
+      body[data-theme="dark"] [class*="annotation"] {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* === DASHBOARD PAGE DARK MODE === */
+      /* Charts and visualizations background */
+      body[data-theme="dark"] [class*="chart"],
+      body[data-theme="dark"] [class*="graph"],
+      body[data-theme="dark"] [class*="canvas"],
+      body[data-theme="dark"] canvas {
+        background-color: #1e293b !important;
+      }
+
+      /* Dashboard cards and widgets */
+      body[data-theme="dark"] [class*="widget"],
+      body[data-theme="dark"] [class*="panel"],
+      body[data-theme="dark"] [class*="dashboard"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* KPI Cards */
+      body[data-theme="dark"] [class*="kpi"],
+      body[data-theme="dark"] [class*="metric"],
+      body[data-theme="dark"] [style*="text-center"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* === ANALYTICS PAGE DARK MODE === */
+      /* Data tables on analytics */
+      body[data-theme="dark"] [class*="analytics"] table,
+      body[data-theme="dark"] [class*="trend"],
+      body[data-theme="dark"] [class*="distribution"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Anomaly detection section */
+      body[data-theme="dark"] [class*="anomaly"],
+      body[data-theme="dark"] [class*="alert"],
+      body[data-theme="dark"] [class*="warning"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* === UPLOAD PAGE DARK MODE === */
+      /* Upload area and dropzone */
+      body[data-theme="dark"] [class*="upload"],
+      body[data-theme="dark"] [class*="dropzone"],
+      body[data-theme="dark"] [class*="drag"] {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] [class*="dropzone"]:hover {
+        background-color: #334155 !important;
+      }
+
+      /* File input styling */
+      body[data-theme="dark"] input[type="file"],
+      body[data-theme="dark"] .form-file {
+        background-color: #334155 !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* Upload history table */
+      body[data-theme="dark"] [class*="history"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] [class*="history"] tbody tr {
+        background-color: #1e293b !important;
+      }
+
+      /* === GENERIC PAGE ELEMENTS === */
+      /* All paragraphs and text content */
+      body[data-theme="dark"] main p,
+      body[data-theme="dark"] .content p {
+        color: #cbd5e1 !important;
+      }
+
+      /* Section titles across all pages */
+      body[data-theme="dark"] main h1,
+      body[data-theme="dark"] main h2,
+      body[data-theme="dark"] main h3,
+      body[data-theme="dark"] .content h1,
+      body[data-theme="dark"] .content h2,
+      body[data-theme="dark"] .content h3 {
+        color: #e2e8f0 !important;
+      }
+
+      /* Empty states and placeholders */
+      body[data-theme="dark"] [class*="empty"],
+      body[data-theme="dark"] [class*="placeholder"],
+      body[data-theme="dark"] [class*="no-data"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* Links throughout all pages */
+      body[data-theme="dark"] a[class*="link"],
+      body[data-theme="dark"] a[class*="btn"] {
+        color: #7dc3ff !important;
+      }
+
+      body[data-theme="dark"] a[class*="link"]:hover,
+      body[data-theme="dark"] a[class*="btn"]:hover {
+        color: #ffffff !important;
+      }
+
+      /* Form labels across all pages */
+      body[data-theme="dark"] label,
+      body[data-theme="dark"] .form-label {
+        color: #e2e8f0 !important;
+      }
+
+      /* Help text and descriptions */
+      body[data-theme="dark"] .form-text,
+      body[data-theme="dark"] [class*="help"],
+      body[data-theme="dark"] [class*="description"],
+      body[data-theme="dark"] [class*="hint"] {
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure all backgrounds are NOT white */
+      body[data-theme="dark"] [style*="background-color: #fff"],
+      body[data-theme="dark"] [style*="background-color: white"],
+      body[data-theme="dark"] [style*="background-color: #ffffff"] {
+        background-color: #1e293b !important;
+      }
+
+      /* === ULTIMATE GLOBAL DARK MODE OVERRIDE === */
+      /* FORCE everything to be dark - no exceptions */
+      body[data-theme="dark"] body,
+      body[data-theme="dark"] html,
+      body[data-theme="dark"] #app,
+      body[data-theme="dark"] main,
+      body[data-theme="dark"] .container,
+      body[data-theme="dark"] .container-fluid {
+        background-color: #0f172a !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Kill ALL white backgrounds from any source */
+      body[data-theme="dark"] *:not(.btn-primary):not(.btn):not(.badge):not(.alert-success):not(.alert-danger) {
+        background-color: transparent !important;
+      }
+
+      /* Ensure cards and boxes have dark backgrounds */
+      body[data-theme="dark"] .card,
+      body[data-theme="dark"] .box,
+      body[data-theme="dark"] [class*="box"],
+      body[data-theme="dark"] [class*="card"],
+      body[data-theme="dark"] [class*="panel"],
+      body[data-theme="dark"] [class*="widget"],
+      body[data-theme="dark"] [class*="metric"],
+      body[data-theme="dark"] [class*="kpi"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* KPI/Metric value numbers */
+      body[data-theme="dark"] [class*="value"],
+      body[data-theme="dark"] [class*="number"],
+      body[data-theme="dark"] [class*="amount"],
+      body[data-theme="dark"] [class*="total"] {
+        color: #e2e8f0 !important;
+      }
+
+      /* Dashboard KPI cards */
+      body[data-theme="dark"] .metric-card,
+      body[data-theme="dark"] .kpi-card,
+      body[data-theme="dark"] .stat-card {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+        border: 1px solid rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] .metric-card strong,
+      body[data-theme="dark"] .kpi-card strong,
+      body[data-theme="dark"] .stat-card strong {
+        color: #e2e8f0 !important;
+      }
+
+      /* Chart/Graph containers */
+      body[data-theme="dark"] [class*="chart"],
+      body[data-theme="dark"] [class*="graph"],
+      body[data-theme="dark"] canvas,
+      body[data-theme="dark"] svg {
+        background-color: transparent !important;
+      }
+
+      /* Ensure all text is readable */
+      body[data-theme="dark"] * {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] h1,
+      body[data-theme="dark"] h2,
+      body[data-theme="dark"] h3,
+      body[data-theme="dark"] h4,
+      body[data-theme="dark"] h5,
+      body[data-theme="dark"] h6,
+      body[data-theme="dark"] .h1,
+      body[data-theme="dark"] .h2,
+      body[data-theme="dark"] .h3,
+      body[data-theme="dark"] .h4,
+      body[data-theme="dark"] .h5,
+      body[data-theme="dark"] .h6 {
+        color: #e2e8f0 !important;
+      }
+
+      /* Whitelist: Buttons keep their colors */
+      body[data-theme="dark"] .btn-primary {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] .btn-primary:hover {
+        background-color: #00d4ff !important;
+        color: #0f172a !important;
+      }
+
+      /* Badge colors */
+      body[data-theme="dark"] .badge {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+      }
+
+      /* Alert colors */
+      body[data-theme="dark"] .alert-success {
+        background-color: rgba(74, 222, 128, 0.2) !important;
+        border-color: #4ade80 !important;
+        color: #bbf7d0 !important;
+      }
+
+      body[data-theme="dark"] .alert-danger {
+        background-color: rgba(220, 38, 38, 0.2) !important;
+        border-color: #ff4444 !important;
+        color: #ffb3b3 !important;
+      }
+
+      body[data-theme="dark"] .alert-warning {
+        background-color: rgba(250, 204, 21, 0.2) !important;
+        border-color: #fbbf24 !important;
+        color: #fed7aa !important;
+      }
+
+      body[data-theme="dark"] .alert-info {
+        background-color: rgba(0, 86, 179, 0.2) !important;
+        border-color: #0056b3 !important;
+        color: #93c5e2 !important;
+      }
+
+      /* Links */
+      body[data-theme="dark"] a {
+        color: #7dc3ff !important;
+      }
+
+      body[data-theme="dark"] a:hover {
+        color: #ffffff !important;
+      }
+
+      /* Form elements */
+      body[data-theme="dark"] .form-control,
+      body[data-theme="dark"] .form-select,
+      body[data-theme="dark"] input,
+      body[data-theme="dark"] select,
+      body[data-theme="dark"] textarea {
+        background-color: #334155 !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.4) !important;
+      }
+
+      body[data-theme="dark"] .form-control:focus,
+      body[data-theme="dark"] .form-select:focus {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+        border-color: #0056b3 !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 212, 255, 0.2) !important;
+      }
+
+      /* Specific element overrides for dashboard/finsight pages */
+      body[data-theme="dark"] [class*="finsight"],
+      body[data-theme="dark"] [class*="dashboard"],
+      body[data-theme="dark"] [class*="analytics"] {
+        background-color: transparent !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure row and column system works */
+      body[data-theme="dark"] .row,
+      body[data-theme="dark"] [class*="col-"],
+      body[data-theme="dark"] [class*="col_"] {
+        background-color: transparent !important;
+      }
+
+      /* Additional overrides for inline styles */
+      body[data-theme="dark"] [style*="background: white"],
+      body[data-theme="dark"] [style*="background: #fff"],
+      body[data-theme="dark"] [style*="background: rgb(255, 255, 255)"] {
+        background: #1e293b !important;
+      }
+
+      body[data-theme="dark"] [style*="background-color: rgba(255,255,255"],
+      body[data-theme="dark"] [style*="background-color: rgba(248,249,250"] {
+        background-color: #1e293b !important;
+      }
+
+      /* Force remove any white colors */
+      body[data-theme="dark"] [style*="color: white"],
+      body[data-theme="dark"] [style*="color: #fff"],
+      body[data-theme="dark"] [style*="color: #ffffff"] {
+        color: #cbd5e1 !important;
+      }
+
+      /* Section spacing and padding - keep transparent */
+      body[data-theme="dark"] section,
+      body[data-theme="dark"] [class*="section"],
+      body[data-theme="dark"] [class*="page"] {
+        background-color: transparent !important;
+      }
+
+      /* Specific fixes for sidebar and navigation within pages */
+      body[data-theme="dark"] [class*="sidebar"],
+      body[data-theme="dark"] [class*="nav-tabs"],
+      body[data-theme="dark"] [class*="breadcrumb"] {
+        background-color: #1a2640 !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Typography across all pages */
+      body[data-theme="dark"] strong,
+      body[data-theme="dark"] b {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] em,
+      body[data-theme="dark"] i {
+        color: #cbd5e1 !important;
+      }
+
+      /* List styling */
+      body[data-theme="dark"] li,
+      body[data-theme="dark"] ul,
+      body[data-theme="dark"] ol {
+        color: #cbd5e1 !important;
+      }
+
+      /* Table and data grid styling */
+      body[data-theme="dark"] [class*="table"],
+      body[data-theme="dark"] [class*="grid"],
+      body[data-theme="dark"] [class*="data"] {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] [class*="table"] thead,
+      body[data-theme="dark"] [class*="grid"] thead {
+        background-color: #334155 !important;
+        color: #ffffff !important;
+      }
+
+      /* Tooltip and popover styling */
+      body[data-theme="dark"] .tooltip,
+      body[data-theme="dark"] .popover {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* Modal styling */
+      body[data-theme="dark"] .modal-dialog {
+        background-color: transparent !important;
+      }
+
+      body[data-theme="dark"] .modal-content {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Spinner and loading indicators */
+      body[data-theme="dark"] .spinner-border,
+      body[data-theme="dark"] .spinner-grow {
+        color: #0056b3 !important;
+      }
+
+      /* Progress bar */
+      body[data-theme="dark"] .progress {
+        background-color: #334155 !important;
+      }
+
+      body[data-theme="dark"] .progress-bar {
+        background-color: #0056b3 !important;
+      }
+      }
+
+      /* Tabs & Pills */
+      body[data-theme="dark"] .nav-tabs {
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] .nav-tabs .nav-link {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .nav-tabs .nav-link:hover {
+        color: #f1f5f9 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] .nav-tabs .nav-link.active {
+        background-color: #0056b3 !important;
+        color: #ffffff !important;
+        border-color: #0056b3 !important;
+      }
+
+      /* Code blocks */
+      body[data-theme="dark"] code,
+      body[data-theme="dark"] pre {
+        background-color: #334155 !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      /* Scrollbar */
+      body[data-theme="dark"] ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      body[data-theme="dark"] ::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+
+      body[data-theme="dark"] ::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+
+      body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      /* Hero Section */
+      body[data-theme="dark"] .hero-section {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+      }
+
+      /* Visibility for all text in dark mode */
+      body[data-theme="dark"] .lead {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .small {
+        color: #cbd5e1 !important;
+      }
+
+      /* FORCE ALL TO BE DARK - OVERRIDE EVERYTHING */
+      body[data-theme="dark"] {
+        background-color: #0f172a !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Dark backgrounds for everything */
+      body[data-theme="dark"] * {
+        background-color: inherit;
+        color: #cbd5e1 !important;
+      }
+
+      /* Force dark backgrounds on containers */
+      body[data-theme="dark"] .container,
+      body[data-theme="dark"] .container-fluid,
+      body[data-theme="dark"] .row,
+      body[data-theme="dark"] section {
+        background-color: #0f172a !important;
+        color: #cbd5e1 !important;
+      }
+
+      /* Specific text element overrides */
+      body[data-theme="dark"] p,
+      body[data-theme="dark"] div,
+      body[data-theme="dark"] span,
+      body[data-theme="dark"] li,
+      body[data-theme="dark"] td,
+      body[data-theme="dark"] label {
+        color: #cbd5e1 !important;
+      }
+
+      /* Headings - Soft white (not too bright) */
+      body[data-theme="dark"] h1,
+      body[data-theme="dark"] h2,
+      body[data-theme="dark"] h3,
+      body[data-theme="dark"] h4,
+      body[data-theme="dark"] h5,
+      body[data-theme="dark"] h6,
+      body[data-theme="dark"] .h1,
+      body[data-theme="dark"] .h2,
+      body[data-theme="dark"] .h3,
+      body[data-theme="dark"] .h4,
+      body[data-theme="dark"] .h5,
+      body[data-theme="dark"] .h6 {
+        color: #e2e8f0 !important;
+        font-weight: 700 !important;
+      }
+
+      /* Light text elements - STILL VISIBLE */
+      body[data-theme="dark"] .text-light,
+      body[data-theme="dark"] .text-white {
+        color: #f1f5f9 !important;
+      }
+
+      /* Secondary text */
+      body[data-theme="dark"] .text-secondary {
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure the main content area is styled */
+      body[data-theme="dark"] main {
+        background-color: #0f172a !important;
+        color: #f1f5f9 !important;
+      }
+
+      /* Cards with dark backgrounds */
+      body[data-theme="dark"] .card {
+        background-color: #1e293b !important;
+        border-color: rgba(0,86,179,0.3) !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .card-body {
+        background-color: #1e293b !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .card-header {
+        background-color: #334155 !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(0,86,179,0.3) !important;
+      }
+
+      body[data-theme="dark"] .card-title {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] .card-text {
+        color: #cbd5e1 !important;
+      }
+
+      /* Ensure sections have proper text color */
+      body[data-theme="dark"] section h1,
+      body[data-theme="dark"] section h2,
+      body[data-theme="dark"] section h3 {
+        color: #ffffff !important;
+      }
+
+      body[data-theme="dark"] section p {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] section div {
+        color: #f1f5f9 !important;
+      }
+
+      /* Ensure inline text is visible */
+      body[data-theme="dark"] .fs-1,
+      body[data-theme="dark"] .fs-2,
+      body[data-theme="dark"] .fs-3,
+      body[data-theme="dark"] .fs-4,
+      body[data-theme="dark"] .fs-5,
+      body[data-theme="dark"] .fs-6 {
+        color: inherit !important;
+      }
+
+      /* Feature lists and descriptions */
+      body[data-theme="dark"] ul,
+      body[data-theme="dark"] ol {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] li {
+        color: #cbd5e1 !important;
+      }
+
+      /* Descriptive text - NOT TOO BRIGHT */
+      body[data-theme="dark"] .description,
+      body[data-theme="dark"] .feature-desc,
+      body[data-theme="dark"] .lead {
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .small {
+        color: #94a3b8 !important;
+      }
+
+      /* Hide or darken all light text classes */
+      body[data-theme="dark"] .text-light,
+      body[data-theme="dark"] .text-white {
+        color: #cbd5e1 !important !important;
+      }
+
+      body[data-theme="dark"] .text-muted {
+        color: #94a3b8 !important;
+      }
+
+      /* Hero sections - DARK BACKGROUND */
+      body[data-theme="dark"] .hero-section,
+      body[data-theme="dark"] [class*="hero"],
+      body[data-theme="dark"] [class*="banner"] {
+        background-color: #1a2640 !important;
+        color: #cbd5e1 !important;
+      }
+
+      body[data-theme="dark"] .hero-section h1,
+      body[data-theme="dark"] .hero-section h2,
+      body[data-theme="dark"] [class*="hero"] h1,
+      body[data-theme="dark"] [class*="hero"] h2 {
+        color: #e2e8f0 !important;
+      }
+
+      body[data-theme="dark"] .hero-section p,
+      body[data-theme="dark"] [class*="hero"] p {
+        color: #cbd5e1 !important;
+      }
+    </style>
+
+    <!-- Apply saved theme immediately -->
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.body.setAttribute('data-theme', savedTheme);
+      })();
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light da-navbar sticky-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand da-logo" href="/">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Decision Analyst Logo" height="40" class="d-inline-block align-text-top">
+                <span class="ms-2 d-none d-md-inline">Decision Analyst</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-icon" href="/">
+                            <div class="icon-label">
+                                <i class="bi bi-house-fill"></i>
+                                <span class="label-text">Home</span>
+                            </div>
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-icon" href="/dashboard" title="Dashboard">
+                            <div class="icon-label">
+                                <i class="bi bi-grid"></i>
+                                <span class="label-text">Dashboard</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-icon" href="/reports" title="Reports">
+                            <div class="icon-label">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span class="label-text">Reports</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link nav-link-icon dropdown-toggle" href="#" id="analyticsDropdown" role="button" data-bs-toggle="dropdown" title="Analytics">
+                            <div class="icon-label">
+                                <i class="bi bi-bar-chart"></i>
+                                <span class="label-text">Analytics</span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/financial-health"><i class="bi bi-heart-pulse"></i> Financial Health</a></li>
+                            <li><a class="dropdown-item" href="/budget-analysis"><i class="bi bi-percent"></i> Budget Analysis</a></li>
+                            <li><a class="dropdown-item" href="/cashflow-analysis"><i class="bi bi-cash-coin"></i> Cash Flow</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link nav-link-icon dropdown-toggle" href="#" id="featuresDropdown" role="button" data-bs-toggle="dropdown" title="Financial Features">
+                            <div class="icon-label">
+                                <i class="bi bi-star"></i>
+                                <span class="label-text">Features</span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/goals"><i class="bi bi-bullseye"></i> Goals Tracker</a></li>
+                            <li><a class="dropdown-item" href="/scenarios"><i class="bi bi-diagram-3"></i> What-If Scenarios</a></li>
+                            <li><a class="dropdown-item" href="/reports"><i class="bi bi-file-earmark-pdf"></i> Advanced Reports</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-icon" href="/settings" title="Settings">
+                            <div class="icon-label">
+                                <i class="bi bi-gear"></i>
+                                <span class="label-text">Settings</span>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <div class="vr"></div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload Data
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-gear"></i> Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link da-btn-primary ms-2" href="{{ url_for('auth.register') }}">
+                            <i class="bi bi-person-plus"></i> Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="py-4">
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="da-footer py-3 mt-5 border-top">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-start">
+                    <small class="text-muted">Personal Finance Decision Support System</small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">&copy; 2025-2026 Decision Analyst. All rights reserved.</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Analysis - Decision Analyst{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-5 justify-content-between">
+        <div>
+            <h1 class="display-5 fw-bold mb-2" style="color: #0056b3;">Budget vs Actual Analysis</h1>
+            <p class="lead text-muted">Compare your planned budgets with actual spending</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="refreshBudgetAnalysis()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-5" style="display: none;">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted">Analyzing budget performance...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span id="error-message"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <!-- Main Content -->
+    <div id="content" style="display: none;">
+        <!-- Overall Summary -->
+        <div class="row mb-4">
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 5px solid #0056b3;">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3"><i class="bi bi-targets"></i> Total Budget</h6>
+                        <div class="h4 fw-bold mb-0" id="total-budget">₹0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 5px solid #dc3545;">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3"><i class="bi bi-cash-flow"></i> Total Actual</h6>
+                        <div class="h4 fw-bold mb-0" id="total-actual">₹0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 5px solid #28a745;">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3"><i class="bi bi-graph-up"></i> Variance</h6>
+                        <div class="h4 fw-bold mb-0" id="variance">₹0</div>
+                        <small id="variance-pct" class="text-muted"></small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-3"><i class="bi bi-speedometer2"></i> Status</h6>
+                        <div id="budget-status" class="badge bg-secondary p-2" style="font-size: 1rem;">Unknown</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="row mb-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-percent"></i> Budget Performance</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <small class="text-muted">Total Categories</small>
+                                <p class="h5 mb-0" id="total-categories">0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">On Track</small>
+                                <p class="h5 mb-0 text-success" id="on-track">0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Over Budget</small>
+                                <p class="h5 mb-0 text-danger" id="over-budget">0</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Performance Rate</small>
+                                <p class="h5 mb-0" id="perf-rate">0%</p>
+                            </div>
+                            <div class="col-12 pt-2 border-top">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <strong>Performance Grade</strong>
+                                    <span id="perf-grade" class="badge bg-primary">N/A</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div id="perf-progress" class="progress-bar bg-success" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-4"><i class="bi bi-lightning-charge"></i> Key Alerts</h6>
+                        <div id="alerts-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Analysis -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h6 class="mb-4"><i class="bi bi-list"></i> Category-wise Analysis</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Budgeted</th>
+                                <th>Actual</th>
+                                <th>Variance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="category-table">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Variance Analysis -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-3"><i class="bi bi-arrow-down-circle text-success"></i> Largest Savings</h6>
+                        <div id="best-savings"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-3"><i class="bi bi-arrow-up-circle text-danger"></i> Largest Overage</h6>
+                        <div id="largest-overage"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h6 class="mb-3"><i class="bi bi-exclamation-triangle text-warning"></i> Recommendations</h6>
+                        <div id="budget-recommendations" class="small"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+body[data-theme="dark"] .card {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .text-muted {
+    color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .table {
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .table th {
+    border-bottom-color: #334155 !important;
+}
+
+body[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: #0f172a !important;
+}
+</style>
+
+<script>
+// Format number with Indian comma spacing
+function formatIndianCurrency(amount) {
+    const num = parseFloat(amount) || 0;
+    const parts = num.toFixed(2).split('.');
+    const integerPart = parts[0];
+    const decimalPart = parts[1];
+    
+    // Format integer part with Indian commas
+    let formatted = integerPart.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return '₹' + formatted + '.' + decimalPart;
+}
+
+function refreshBudgetAnalysis() {
+    loadBudgetVsActual();
+}
+
+async function loadBudgetVsActual() {
+    const loading = document.getElementById('loading');
+    const content = document.getElementById('content');
+    const error = document.getElementById('error');
+    const noBudgetsInfo = document.getElementById('no-budgets-info');
+    
+    loading.style.display = 'block';
+    content.style.display = 'none';
+    error.style.display = 'none';
+    noBudgetsInfo.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/budget-vs-actual');
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw {
+                message: result.message || 'Analysis failed',
+                needs_upload: result.needs_upload,
+                needs_budget: result.needs_budget
+            };
+        }
+        
+        const data = result.data;
+        
+        // Check if there are no budgets but we have spending data
+        if (data.no_budgets) {
+            noBudgetsInfo.style.display = 'block';
+        }
+        
+        displayBudgetVsActual(data);
+        
+        loading.style.display = 'none';
+        content.style.display = 'block';
+    } catch (err) {
+        console.error('Error:', err);
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        
+        let errorHTML = `<i class="bi bi-exclamation-triangle me-2"></i>`;
+        
+        if (err.needs_upload) {
+            errorHTML += `<span>${err.message || 'No data available'}</span><br>
+                <small class="mt-2 d-block">
+                    <a href="/upload" class="alert-link">Upload CSV File</a> to get started
+                </small>`;
+        } else if (err.needs_budget) {
+            errorHTML += `<span>${err.message || 'No budgets created'}</span><br>
+                <small class="mt-2 d-block">
+                    <a href="/settings#budgets" class="alert-link">Create Budget</a> to compare spending
+                </small>`;
+        } else {
+            errorHTML += `<span>${err.message || err || 'Unable to load analysis'}</span>`;
+        }
+        
+        document.getElementById('error-message').innerHTML = errorHTML;
+    }
+}
+
+function displayBudgetVsActual(data) {
+    const noBudgets = data.no_budgets === true;
+    
+    // Overall Summary
+    const summary = data.overall_summary || {};
+    
+    // If no budgets, hide budget-related cards and adjust display
+    if (noBudgets) {
+        // Hide budget card - use safer selector and null check
+        const budgetCard = document.querySelector('[style*="border-left: 5px solid #0056b3"]');
+        if (budgetCard && budgetCard.parentElement) {
+            budgetCard.parentElement.style.display = 'none';
+        }
+        
+        // Change actual card to primary
+        const actualCard = document.querySelector('[style*="border-left: 5px solid #dc3545"]');
+        if (actualCard && actualCard.parentElement) {
+            actualCard.parentElement.className = 'col-lg-4';
+        }
+        
+        // Hide variance card
+        const varianceCard = document.querySelector('[style*="border-left: 5px solid #28a745"]');
+        if (varianceCard && varianceCard.parentElement) {
+            varianceCard.parentElement.style.display = 'none';
+        }
+        
+        // Hide status card - find by element position
+        const statusCard = document.querySelectorAll('[style*="border-left"]');
+        if (statusCard.length > 2 && statusCard[3] && statusCard[3].parentElement) {
+            statusCard[3].parentElement.style.display = 'none';
+        }
+    }
+    
+    document.getElementById('total-actual').textContent = '₹' + (summary.total_actual || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    if (!noBudgets) {
+        document.getElementById('total-budget').textContent = formatIndianCurrency(summary.total_budget || 0);
+        document.getElementById('variance').textContent = formatIndianCurrency(summary.variance || 0);
+        document.getElementById('variance-pct').textContent = (summary.variance_percentage || 0).toFixed(1) + '%';
+        
+        const statusBadge = document.getElementById('budget-status');
+        const statusClass = {
+            'under_budget': 'bg-success',
+            'on_track': 'bg-info',
+            'over_budget_minor': 'bg-warning',
+            'over_budget_major': 'bg-danger'
+        }[summary.budget_status] || 'bg-secondary';
+        statusBadge.className = 'badge ' + statusClass + ' p-2';
+        statusBadge.textContent = summary.budget_status?.replace(/_/g, ' ').toUpperCase() || 'Unknown';
+    }
+    
+    // Performance Metrics
+    const perf = data.budget_performance || {};
+    const totalCategoriesEl = document.getElementById('total-categories');
+    if (totalCategoriesEl) {
+        totalCategoriesEl.textContent = perf.total_categories || 0;
+    }
+    
+    if (!noBudgets) {
+        const onTrackEl = document.getElementById('on-track');
+        const overBudgetEl = document.getElementById('over-budget');
+        const perfRateEl = document.getElementById('perf-rate');
+        const perfGradeEl = document.getElementById('perf-grade');
+        const perfProgressEl = document.getElementById('perf-progress');
+        
+        if (onTrackEl) onTrackEl.textContent = perf.on_track_categories || 0;
+        if (overBudgetEl) overBudgetEl.textContent = perf.over_budget_categories || 0;
+        if (perfRateEl) perfRateEl.textContent = (perf.performance_rate || 0).toFixed(1) + '%';
+        if (perfGradeEl) perfGradeEl.textContent = perf.performance_grade || 'N/A';
+        if (perfProgressEl) perfProgressEl.style.width = (perf.performance_rate || 0) + '%';
+    } else {
+        // Hide performance metrics safely
+        const onTrackEl = document.getElementById('on-track');
+        const overBudgetEl = document.getElementById('over-budget');
+        const perfRateEl = document.getElementById('perf-rate');
+        
+        if (onTrackEl && onTrackEl.parentElement && onTrackEl.parentElement.parentElement) {
+            onTrackEl.parentElement.parentElement.style.display = 'none';
+        }
+        if (overBudgetEl && overBudgetEl.parentElement && overBudgetEl.parentElement.parentElement) {
+            overBudgetEl.parentElement.parentElement.style.display = 'none';
+        }
+        if (perfRateEl && perfRateEl.parentElement && perfRateEl.parentElement.parentElement) {
+            perfRateEl.parentElement.parentElement.style.display = 'none';
+        }
+    }
+    
+    // Alerts - only show if budgets exist
+    if (!noBudgets) {
+        const alerts = data.alerts || [];
+        const alertsContainer = document.getElementById('alerts-container');
+        if (alertsContainer) {
+            const alertsHTML = alerts.slice(0, 5).map(alert => `
+                <div class="alert alert-${alert.severity === 'high' ? 'danger' : 'warning'} py-2 mb-2">
+                    <strong>${alert.category}:</strong> ${alert.message}
+                </div>
+            `).join('');
+            alertsContainer.innerHTML = alertsHTML || '<p class="text-muted">No alerts</p>';
+        }
+    }
+    
+    
+    // Category Analysis
+    const categories = data.category_analysis || {};
+    const categoryTableEl = document.getElementById('category-table');
+    if (categoryTableEl) {
+        const categoryRows = Object.entries(categories).map(([cat, info]) => {
+            if (noBudgets) {
+                return `<tr>
+                    <td><strong>${cat}</strong></td>
+                    <td>-</td>
+                    <td>${formatIndianCurrency(info.actual || 0)}</td>
+                    <td><span class="badge bg-info">Spending Data</span></td>
+                    <td>-</td>
+                </tr>`;
+            } else {
+                return `<tr>
+                    <td><strong>${cat}</strong></td>
+                    <td>${formatIndianCurrency(info.budgeted || 0)}</td>
+                    <td>${formatIndianCurrency(info.actual || 0)}</td>
+                    <td class="${info.variance < 0 ? 'text-danger' : 'text-success'}">
+                        ${info.variance < 0 ? '-' : '+'}${formatIndianCurrency(Math.abs(info.variance || 0)).replace('₹', '')}
+                        <br><small>${(info.variance_percentage || 0).toFixed(1)}%</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-${info.performance === 'on_track' ? 'success' : info.performance === 'under_budget' ? 'info' : info.performance === 'unbudgeted' ? 'secondary' : 'danger'}">
+                            ${info.performance?.replace(/_/g, ' ').toUpperCase()}
+                        </span>
+                    </td>
+                </tr>`;
+            }
+        }).join('');
+        categoryTableEl.innerHTML = categoryRows || '<tr><td colspan="5" class="text-center text-muted">No data</td></tr>';
+    }
+    
+    // Variance Analysis
+    const variance = data.variance_analysis || {};
+    const bestSavingsEl = document.getElementById('best-savings');
+    
+    if (bestSavingsEl) {
+        if (!noBudgets && variance.best_savings) {
+            bestSavingsEl.innerHTML = `
+                <p class="mb-1"><strong>${variance.best_savings.category}</strong></p>
+                <p class="h5 mb-0 text-success">+${formatIndianCurrency(variance.best_savings.savings || 0).replace('₹', '')}</p>
+            `;
+        } else if (noBudgets) {
+            bestSavingsEl.innerHTML = '<p class="text-muted">Create budgets to track savings</p>';
+        } else {
+            bestSavingsEl.innerHTML = '<p class="text-muted">No savings recorded</p>';
+        }
+    }
+    
+    // Biggest overspend
+    const worstOverspendEl = document.getElementById('worst-overspend');
+    if (worstOverspendEl) {
+        if (!noBudgets && variance.worst_overspend) {
+            worstOverspendEl.innerHTML = `
+                <p class="mb-1"><strong>${variance.worst_overspend.category}</strong></p>
+                <p class="h5 mb-0 text-danger">-${formatIndianCurrency(variance.worst_overspend.overspend || 0).replace('₹', '')}</p>
+            `;
+        } else if (noBudgets) {
+            worstOverspendEl.innerHTML = '<p class="text-muted">Create budgets to track overspending</p>';
+        } else {
+            worstOverspendEl.innerHTML = '<p class="text-muted">No overspending</p>';
+        }
+    }
+    
+    // Largest overage
+    const largestOverageEl = document.getElementById('largest-overage');
+    if (largestOverageEl) {
+        if (!noBudgets && variance.largest_overage) {
+            largestOverageEl.innerHTML = `
+                <p class="mb-1"><strong>${variance.largest_overage.category}</strong></p>
+                <p class="h5 mb-0 text-danger">-${formatIndianCurrency(variance.largest_overage.overage || 0).replace('₹', '')}</p>
+            `;
+        } else if (noBudgets) {
+            largestOverageEl.innerHTML = '<p class="text-muted">No budget targets set</p>';
+        } else {
+            largestOverageEl.innerHTML = '<p class="text-muted">Under budget</p>';
+        }
+    }
+    
+    // Recommendations - only for budgets
+    const bugetRecsEl = document.getElementById('budget-recommendations');
+    if (bugetRecsEl) {
+        if (!noBudgets) {
+            const recs = data.recommendations || [];
+            const recsHTML = recs.slice(0, 3).map(rec => `
+                <div class="mb-2">
+                    <p class="mb-1"><strong>${rec.priority?.toUpperCase()}</strong></p>
+                    <small>${rec.message}</small>
+                </div>
+            `).join('');
+            bugetRecsEl.innerHTML = recsHTML || '<p class="text-muted">No recommendations</p>';
+        } else {
+            bugetRecsEl.innerHTML = '<p class="text-muted">Create budgets to get spending recommendations</p>';
+        }
+    }
+}
+
+// Load analysis on page load
+document.addEventListener('DOMContentLoaded', loadBudgetVsActual);
+</script>
+{% endblock %}

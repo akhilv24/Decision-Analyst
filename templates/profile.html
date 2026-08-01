@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Decision Analyst{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <!-- Profile Picture Section -->
+                    <div class="profile-pic-container mb-3">
+                        {% if current_user.profile_picture %}
+                            <img id="profilePicture" src="{{ url_for('static', filename='uploads/profile_pictures/' + current_user.profile_picture) }}" 
+                                 alt="{{ current_user.username }}" class="profile-pic rounded-circle">
+                        {% else %}
+                            <div id="profilePicture" class="avatar-circle bg-gradient text-white rounded-circle d-flex align-items-center justify-content-center mx-auto">
+                                <span class="avatar-initials">{{ current_user.first_name[0] if current_user.first_name else current_user.username[0].upper() }}</span>
+                            </div>
+                        {% endif %}
+                        <label for="pictureInput" class="picture-upload-label">
+                            <i class="bi bi-camera-fill"></i>
+                        </label>
+                        <input type="file" id="pictureInput" class="d-none" accept="image/*">
+                    </div>
+
+                    <h4>{{ current_user.first_name }} {{ current_user.last_name }}</h4>
+                    <p class="text-muted mb-1">@{{ current_user.username }}</p>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    <hr>
+                    <p class="small text-muted mb-0">
+                        Member since {{ current_user.created_at.strftime('%B %d, %Y') }}
+                        {% if current_user.last_login %}
+                        <br>Last login: {{ current_user.last_login.strftime('%B %d, %Y %H:%M') }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Uploads</h5>
+                </div>
+                <div class="card-body">
+                    {% if uploads %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>Records</th>
+                                    <th>Date Range</th>
+                                    <th>Uploaded</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for upload in uploads %}
+                                <tr>
+                                    <td>{{ upload.original_filename }}</td>
+                                    <td><span class="badge bg-info">{{ upload.record_count }}</span></td>
+                                    <td>
+                                        {% if upload.date_range_start and upload.date_range_end %}
+                                        {{ upload.date_range_start.strftime('%Y-%m-%d') }} to {{ upload.date_range_end.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ upload.upload_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4 mb-0">No uploads yet. <a href="{{ url_for('upload_page') }}">Upload your first file</a></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Account Actions</h5>
+                </div>
+                <div class="card-body d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('upload_page') }}" class="btn btn-primary">Upload New File</a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Progress Modal -->
+<div class="modal fade" id="uploadProgressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="spinner-border mb-3" role="status">
+                    <span class="visually-hidden">Uploading...</span>
+                </div>
+                <p>Uploading profile picture...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-pic-container {
+        position: relative;
+        display: inline-block;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+
+    .profile-pic {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 4px solid #e9ecef;
+    }
+
+    .avatar-circle {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-size: 50px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .avatar-initials {
+        text-transform: uppercase;
+    }
+
+    .picture-upload-label {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 35px;
+        height: 35px;
+        background-color: #007bff;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 16px;
+        border: 3px solid white;
+        transition: all 0.3s ease;
+    }
+
+    .picture-upload-label:hover {
+        background-color: #0056b3;
+        transform: scale(1.1);
+    }
+
+    .bg-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+</style>
+
+<script>
+    // Profile Picture Upload
+    const pictureInput = document.getElementById('pictureInput');
+
+    pictureInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+            alert('Please select a valid image file (JPG, PNG, GIF, or WebP)');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            return;
+        }
+
+        // Show upload progress
+        const uploadModal = new bootstrap.Modal(document.getElementById('uploadProgressModal'));
+        uploadModal.show();
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/auth/api/upload-profile-picture', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            uploadModal.hide();
+
+            if (data.success) {
+                // Update profile picture
+                const profilePic = document.getElementById('profilePicture');
+                if (profilePic.tagName === 'IMG') {
+                    profilePic.src = data.picture_url + '?t=' + new Date().getTime();
+                } else {
+                    // Replace default avatar with image
+                    const img = document.createElement('img');
+                    img.src = data.picture_url;
+                    img.alt = 'Profile Picture';
+                    img.className = 'profile-pic rounded-circle';
+                    img.id = 'profilePicture';
+                    profilePic.parentNode.replaceChild(img, profilePic);
+                }
+                
+                // Show success message
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.innerHTML = `
+                    <strong>Success!</strong> ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container').insertBefore(successAlert, document.querySelector('.row'));
+                
+                // Auto-dismiss after 3 seconds
+                setTimeout(() => successAlert.remove(), 3000);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            uploadModal.hide();
+            console.error('Error uploading profile picture:', error);
+            alert('Error uploading profile picture. Please try again.');
+        }
+
+        // Reset input
+        pictureInput.value = '';
+    });
+</script>
+
+{% endblock %}

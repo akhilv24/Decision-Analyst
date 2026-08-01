@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Upload & Analyze - Decision Analyst{% endblock %}
+
+{% block content %}
+<style>
+  .upload-shell {
+    min-height: 72vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .upload-card {
+    width: min(980px, 96%);
+    text-align: center;
+  }
+
+  .upload-title {
+    font-size: clamp(1.8rem, 3vw, 2.6rem);
+    font-weight: 700;
+    margin-bottom: .35rem;
+  }
+
+  .upload-sub {
+    opacity: .8;
+    margin-bottom: 1.5rem;
+  }
+
+  .composer {
+    border: 1px solid rgba(140, 140, 140, .35);
+    border-radius: 28px;
+    background: var(--bs-body-bg, #fff);
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    padding: .85rem .9rem;
+    text-align: left;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+
+  .composer.error {
+    border-color: #d9534f !important;
+    animation: shake .28s linear 1;
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+
+  .file-chip-wrap {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: .6rem;
+    min-height: 2px;
+  }
+
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    border: 1px solid rgba(13,110,253,.35);
+    background: rgba(13,110,253,.08);
+    color: #0d6efd;
+    border-radius: 999px;
+    padding: .25rem .65rem;
+    font-size: .85rem;
+  }
+
+  .file-chip .remove {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    font-size: 1rem;
+  }
+
+  .composer-row {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: end;
+    gap: .6rem;
+  }
+
+  .icon-btn, .send-btn {
+    border: 0;
+    cursor: pointer;
+  }
+
+  .icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(120,120,120,.12);
+  }
+
+  .data-pill {
+    border-radius: 999px;
+    min-width: 135px;
+    height: 42px;
+  }
+
+  .ask-box {
+    border: 0;
+    outline: 0;
+    resize: none;
+    width: 100%;
+    min-height: 72px;
+    max-height: 160px;
+    background: transparent;
+    padding: .45rem .2rem;
+    font-size: 1.02rem;
+  }
+
+  .send-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+    font-size: 1.1rem;
+  }
+
+  .send-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+  }
+
+  .upload-hint {
+    font-size: .85rem;
+    margin-top: .65rem;
+    color: #c0392b;
+    min-height: 1.1rem;
+    text-align: center;
+  }
+</style>
+
+<div class="upload-shell">
+  <div class="upload-card">
+    <h1 class="upload-title">Where should we start?</h1>
+    <p class="upload-sub">Upload a financial file or describe what you want to analyze</p>
+
+    <form id="smartUploadForm" method="post" enctype="multipart/form-data" novalidate>
+      {% if form is defined %}
+        {{ form.hidden_tag() }}
+      {% endif %}
+      {% if csrf_token is defined %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% endif %}
+
+      <input id="fileInput" name="file" type="file" class="d-none" accept=".csv,.xlsx,.xls,.pdf">
+
+      <div id="composer" class="composer">
+        <div id="fileChipWrap" class="file-chip-wrap"></div>
+
+        <div class="composer-row">
+          <button id="attachBtn" type="button" class="icon-btn" title="Attach file">
+            <i class="bi bi-paperclip"></i>
+          </button>
+
+          <select id="dataType" name="data_type" class="form-select data-pill">
+            <option value="auto" selected>Auto-detect</option>
+            <option value="financial_statements">FS</option>
+            <option value="transactions">TXN</option>
+          </select>
+
+          <textarea id="queryInput"
+                    name="query"
+                    class="ask-box"
+                    placeholder="'"></textarea>
+
+          <button id="sendBtn" type="submit" class="send-btn" title="Analyze">
+            <i class="bi bi-arrow-up"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="uploadHint" class="upload-hint"></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById('smartUploadForm');
+  const composer = document.getElementById('composer');
+  const fileInput = document.getElementById('fileInput');
+  const attachBtn = document.getElementById('attachBtn');
+  const sendBtn = document.getElementById('sendBtn');
+  const queryInput = document.getElementById('queryInput');
+  const fileChipWrap = document.getElementById('fileChipWrap');
+  const uploadHint = document.getElementById('uploadHint');
+
+  function formatBytes(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    const sizes = ['B','KB','MB','GB'];
+    const i = Math.min(Math.floor(Math.log(bytes || 1) / Math.log(1024)), sizes.length - 1);
+    return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${sizes[i]}`;
+  }
+
+  function renderFileChip() {
+    fileChipWrap.innerHTML = '';
+    const f = fileInput.files?.[0];
+    if (!f) return;
+
+    const chip = document.createElement('div');
+    chip.className = 'file-chip';
+    chip.innerHTML = `
+      <i class="bi bi-file-earmark-text"></i>
+      <span>${f.name}</span>
+      <small>(${formatBytes(f.size)})</small>
+      <button type="button" class="remove" aria-label="Remove file">&times;</button>
+    `;
+    chip.querySelector('.remove').addEventListener('click', () => {
+      fileInput.value = '';
+      renderFileChip();
+    });
+    fileChipWrap.appendChild(chip);
+  }
+
+  function showMissingFileError() {
+    composer.classList.add('error');
+    uploadHint.textContent = 'Attach a file to analyze.';
+    setTimeout(() => composer.classList.remove('error'), 320);
+  }
+
+  attachBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    uploadHint.textContent = '';
+    renderFileChip();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    uploadHint.textContent = '';
+
+    const file = fileInput.files?.[0];
+    if (!file) {
+      showMissingFileError();
+      return;
+    }
+
+    try {
+      sendBtn.disabled = true;
+
+      const fd = new FormData(form);
+      fd.set('file', file);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        uploadHint.textContent = data.message || 'Upload failed.';
+        composer.classList.add('error');
+        setTimeout(() => composer.classList.remove('error'), 320);
+        return;
+      }
+
+      window.location.href = data.redirect || '/finsight';
+    } catch (err) {
+      uploadHint.textContent = 'Network error while uploading.';
+    } finally {
+      sendBtn.disabled = false;
+    }
+  });
+</script>
+{% endblock %}

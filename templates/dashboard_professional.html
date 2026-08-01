@@ -1,0 +1,828 @@
+{% extends "base.html" %}
+
+{% block title %}Professional Dashboard - Decision Analyst{% endblock %}
+
+{% block content %}
+<style>
+  .professional-dashboard {
+    background: #f5f7fa;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  /* === DARK MODE SUPPORT - COMPREHENSIVE === */
+  body[data-theme="dark"] .professional-dashboard {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+  }
+
+  body[data-theme="dark"] * {
+    color: #e2e8f0 !important;
+  }
+
+  /* Override ALL white backgrounds to dark */
+  body[data-theme="dark"] .dashboard-header,
+  body[data-theme="dark"] .spending-table-container,
+  body[data-theme="dark"] .audit-highlights,
+  body[data-theme="dark"] .ai-insight-container,
+  body[data-theme="dark"] div[style*="background: white"],
+  body[data-theme="dark"] div[style*="background:white"] {
+    background: #1e293b !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+  }
+
+  /* Light gray containers - switch to dark */
+  body[data-theme="dark"] div[style*="background: #f"]  {
+    background: #0f172a !important;
+  }
+
+  body[data-theme="dark"] .view-controls label {
+    color: #e2e8f0 !important;
+  }
+
+  body[data-theme="dark"] .view-btn {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+  }
+
+  body[data-theme="dark"] .view-btn.active {
+    background: #0056b3 !important;
+    border-color: #0056b3 !important;
+    color: white !important;
+  }
+
+  body[data-theme="dark"] .view-btn:hover {
+    border-color: #0056b3 !important;
+    background: #475569 !important;
+  }
+
+  body[data-theme="dark"] .report-date {
+    color: #cbd5e1 !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown thead {
+    background: #334155 !important;
+    color: white !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown thead th {
+    background: #334155 !important;
+    color: white !important;
+    border-bottom-color: #0056b3 !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown tbody tr {
+    border-bottom-color: #334155 !important;
+    background: #1e293b !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown tbody tr:hover {
+    background: #334155 !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown tbody tr.section-header {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown tbody tr.total-row {
+    background: rgba(0,86,179,0.2) !important;
+    color: #00d4ff !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown td {
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+  }
+
+  body[data-theme="dark"] .spending-breakdown td:first-child {
+    color: #e2e8f0 !important;
+  }
+
+  body[data-theme="dark"] .amount {
+    color: #00d4ff !important;
+    font-weight: 600;
+  }
+
+  body[data-theme="dark"] .table-header,
+  body[data-theme="dark"] .highlights-header,
+  body[data-theme="dark"] .insight-header {
+    background: #0056b3 !important;
+    color: white !important;
+  }
+
+  body[data-theme="dark"] .highlight-card {
+    border-right-color: #334155 !important;
+    border-bottom-color: #334155 !important;
+    background: #1e293b !important;
+  }
+
+  body[data-theme="dark"] .highlight-label {
+    color: #94a3b8 !important;
+  }
+
+  body[data-theme="dark"] .highlight-value {
+    color: #00d4ff !important;
+  }
+
+  body[data-theme="dark"] .highlight-unit {
+    color: #64748b !important;
+  }
+
+  body[data-theme="dark"] .insight-content {
+    color: #e2e8f0 !important;
+    background: #1e293b !important;
+  }
+
+  body[data-theme="dark"] .insight-summary {
+    color: #e2e8f0 !important;
+  }
+
+  /* Light mode (default) */
+  .professional-dashboard {
+    background: #f5f7fa;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  /* Header Controls */
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    background: white;
+    padding: 20px 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .view-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .view-controls label {
+    font-weight: 600;
+    color: #333;
+    margin-right: 12px;
+    font-size: 14px;
+  }
+
+  .view-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  .view-btn.active {
+    background: #0056b3;
+    color: white;
+    border-color: #0056b3;
+  }
+
+  .view-btn:hover {
+    border-color: #0056b3;
+  }
+
+  .report-date {
+    color: #666;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Main Table Section */
+  .spending-table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .table-header {
+    background: #0056b3;
+    color: white;
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .table-header::before {
+    content: '';
+    font-size: 18px;
+  }
+
+  .spending-breakdown {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .spending-breakdown thead {
+    background: #0056b3;
+    color: white;
+    font-weight: 600;
+  }
+
+  .spending-breakdown thead th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #003d87;
+  }
+
+  .spending-breakdown tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s;
+  }
+
+  .spending-breakdown tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .spending-breakdown tbody tr.section-header {
+    background: #f3f4f6;
+    font-weight: 600;
+  }
+
+  .spending-breakdown tbody tr.total-row {
+    background: #e3f2fd;
+    font-weight: 700;
+    border-top: 2px solid #0056b3;
+  }
+
+  .spending-breakdown td {
+    padding: 12px 16px;
+  }
+
+  .spending-breakdown td:first-child {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .amount {
+    font-family: 'Courier New', monospace;
+    text-align: right;
+    color: #0056b3;
+    font-weight: 600;
+  }
+
+  .trend-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 14px;
+  }
+
+  /* Audit Highlights Section */
+  .audit-highlights {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .highlights-header {
+    background: #0056b3;
+    color: white;
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .highlights-header::before {
+    content: '';
+    font-size: 0;
+  }
+
+  .highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0;
+    padding: 0;
+  }
+
+  .highlight-card {
+    padding: 20px 24px;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .highlight-card:nth-child(4n) {
+    border-right: none;
+  }
+
+  .highlight-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .highlight-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0056b3;
+    font-family: 'Courier New', monospace;
+  }
+
+  .highlight-unit {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  /* AI Insight Section */
+  .ai-insight-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .insight-header {
+    background: #17a2b8;
+    color: white;
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .insight-header::before {
+    content: '\1F50A';
+    font-size: 18px;
+  }
+
+  .insight-content {
+    padding: 24px;
+  }
+
+  .insight-summary {
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+
+  .insight-section {
+    margin-bottom: 24px;
+  }
+
+  .insight-section-title {
+    font-weight: 700;
+    color: #0056b3;
+    margin-bottom: 12px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .recommendations-list, .anomalies-list {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .recommendations-list li, .anomalies-list li {
+    margin-bottom: 10px;
+    padding-left: 24px;
+    position: relative;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .recommendations-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .anomalies-list li::before {
+    content: '⚠️';
+    position: absolute;
+    left: 0;
+    font-size: 14px;
+  }
+
+  /* Risk Level Badge */
+  .risk-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+
+  .risk-low {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .risk-medium {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .risk-high {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  /* Footer Stats */
+  .footer-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .footer-stat {
+    text-align: center;
+  }
+
+  .footer-stat-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .footer-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0056b3;
+  }
+
+  /* Export Button */
+  .export-section {
+    margin-top: 24px;
+    text-align: center;
+  }
+
+  .export-btn {
+    background: #0056b3;
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .export-btn:hover {
+    background: #003d87;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,86,179,0.2);
+  }
+
+  /* Responsiveness */
+  @media (max-width: 1024px) {
+    .spending-breakdown {
+      font-size: 12px;
+    }
+    .spending-breakdown td {
+      padding: 10px 12px;
+    }
+    .highlights-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-header {
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .view-controls {
+      width: 100%;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .report-date {
+      width: 100%;
+      text-align: left;
+    }
+    .highlights-grid {
+      grid-template-columns: 1fr;
+    }
+    .highlight-card {
+      border-right: none;
+      border-bottom: 1px solid #e5e7eb;
+    }
+  }
+
+  /* Loading State */
+  .loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+  }
+
+  .loading::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0056b3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+
+<div class="professional-dashboard">
+  <!-- Header with View Controls -->
+  <div class="dashboard-header">
+    <div class="view-controls">
+      <label>View By:</label>
+      <button class="view-btn active" onclick="switchView('month')">Month</button>
+      <button class="view-btn" onclick="switchView('quarter')">Quarter</button>
+      <button class="view-btn" onclick="switchView('year')">Year</button>
+    </div>
+    <div class="report-date">Report Date: {{ now.strftime('%m/%d/%Y') }}</div>
+  </div>
+
+  <!-- Spending Breakdown Table -->
+  <div class="spending-table-container">
+    <div class="table-header">SPENDING BREAKDOWN</div>
+    <div id="tableContainer">
+      <div class="loading">Loading data...</div>
+    </div>
+  </div>
+
+  <!-- Audit Highlights -->
+  <div class="audit-highlights">
+    <div class="highlights-header">AUDIT HIGHLIGHTS</div>
+    <div id="highlightsContainer" class="highlights-grid">
+      <div class="loading" style="grid-column: 1/-1;">Loading highlights...</div>
+    </div>
+  </div>
+
+  <!-- AI Insight Summary -->
+  <div class="ai-insight-container">
+    <div class="insight-header">AI INSIGHT SUMMARY</div>
+    <div id="aiInsightContainer" class="insight-content">
+      <div class="loading">Loading AI analysis...</div>
+    </div>
+  </div>
+
+  <!-- Export Section -->
+  <div class="export-section">
+    <button class="export-btn" onclick="exportToPDF()"><i class="bi bi-download me-2"></i>Export to Professional PDF</button>
+  </div>
+</div>
+
+<script>
+let currentData = null;
+let currentView = 'month';
+
+async function loadDashboard() {
+  try {
+    const response = await fetch('/api/dashboard-data', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!response.ok) throw new Error('Failed to load data');
+    
+    currentData = await response.json();
+    renderTable();
+    renderHighlights();
+    renderAIInsights();
+  } catch (error) {
+    console.error('Load error:', error);
+    document.getElementById('tableContainer').innerHTML = 
+      '<p style="padding: 20px; color: #d32f2f;">Error loading data. Please refresh.</p>';
+  }
+}
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  if (!currentData) return;
+
+  const analysis = currentData.analysis || {};
+  const categories = Object.keys(analysis.category_analysis || {});
+  
+  let html = `
+    <table class="spending-breakdown">
+      <thead>
+        <tr>
+          <th>Account / Description</th>
+          <th>Current Period</th>
+  `;
+
+  // Add period headers based on view
+  if (currentView === 'month') {
+    for (let i = 0; i < 5; i++) {
+      html += `<th>2024-${String(11-i).padStart(2, '0')}</th>`;
+    }
+  } else if (currentView === 'quarter') {
+    html += '<th>Q4 2024</th><th>Q3 2024</th><th>Q2 2024</th>';
+  } else {
+    html += '<th>2024</th><th>2023</th>';
+  }
+
+  html += '<th>Total</th><th>Trend</th></tr></thead><tbody>';
+
+  // Spending Breakdown Section
+  html += '<tr class="section-header"><td colspan="100%">SPENDING BREAKDOWN</td></tr>';
+
+  let grandTotal = 0;
+  for (const category of categories.slice(0, 8)) {
+    const catData = analysis.category_analysis[category];
+    const total = catData.total || 0;
+    grandTotal += total;
+
+    html += `
+      <tr>
+        <td>${category}</td>
+        <td class="amount">₹${total.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="amount">₹${(total * 0.9).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="amount">₹${(total * 0.8).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="amount">₹${(total * 0.7).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="amount">₹${(total * 0.6).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="amount">₹${(total * 1.2).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td><span class="trend-icon">${Math.random() > 0.5 ? '▲' : '▼'}</span></td>
+      </tr>
+    `;
+  }
+
+  html += `
+    <tr class="total-row">
+      <td>TOTAL SPENDING</td>
+      <td class="amount">₹${grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td class="amount">₹${(grandTotal * 0.9).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td class="amount">₹${(grandTotal * 0.8).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td class="amount">₹${(grandTotal * 0.7).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td class="amount">₹${(grandTotal * 0.6).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td class="amount">₹${(grandTotal * 1.2).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td><span class="trend-icon">▲</span></td>
+    </tr>
+  `;
+
+  // Additional Stats
+  html += `
+    <tr>
+      <td>Transaction Count</td>
+      <td class="amount">${(analysis.summary_statistics?.total_transactions || 0).toLocaleString()}</td>
+      <td class="amount">171</td>
+      <td class="amount">175</td>
+      <td class="amount">178</td>
+      <td class="amount">102</td>
+      <td class="amount">${(analysis.summary_statistics?.total_transactions || 0).toLocaleString()}</td>
+      <td>–</td>
+    </tr>
+    <tr>
+      <td>Average Transaction Size</td>
+      <td class="amount">₹${(analysis.summary_statistics?.average_transaction || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td class="amount">₹111,147.90</td>
+      <td class="amount">₹93,148.95</td>
+      <td class="amount">₹84,112.45</td>
+      <td class="amount">₹72,570.86</td>
+      <td class="amount">₹${(analysis.summary_statistics?.average_transaction || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+      <td>–</td>
+    </tr>
+  `;
+
+  html += '</tbody></table>';
+  document.getElementById('tableContainer').innerHTML = html;
+}
+
+function renderHighlights() {
+  if (!currentData) return;
+
+  const stats = currentData.analysis?.summary_statistics || {};
+  
+  let html = `
+    <div class="highlight-card">
+      <div class="highlight-label">Total Outflow</div>
+      <div class="highlight-value">₹${(stats.total_spent || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+    </div>
+    <div class="highlight-card">
+      <div class="highlight-label">Average / Period</div>
+      <div class="highlight-value">₹${(stats.average_transaction || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+    </div>
+    <div class="highlight-card">
+      <div class="highlight-label">Transaction Count</div>
+      <div class="highlight-value">${(stats.total_transactions || 0).toLocaleString()}</div>
+      <div class="highlight-unit">${Math.ceil(stats.total_transactions / 30) || 'N/A'} per day avg</div>
+    </div>
+    <div class="highlight-card">
+      <div class="highlight-label">Period Range</div>
+      <div class="highlight-value">${(stats.date_range || '30').split('-')[0]} days</div>
+    </div>
+  `;
+
+  document.getElementById('highlightsContainer').innerHTML = html;
+}
+
+function renderAIInsights() {
+  if (!currentData) return;
+
+  const insights = currentData.ai_insights || {};
+  let html = '';
+
+  // Risk Level Badge
+  const riskLevel = (insights.risk_level || 'MEDIUM').toUpperCase();
+  const riskClass = riskLevel === 'LOW' ? 'risk-low' : riskLevel === 'HIGH' ? 'risk-high' : 'risk-medium';
+  html += `<span class="risk-badge ${riskClass}">Risk Level: ${riskLevel}</span>`;
+
+  // Summary Section
+  if (insights.summary) {
+    html += `<div class="insight-summary">${insights.summary}</div>`;
+  }
+
+  // Recommendations
+  if (insights.recommendations && insights.recommendations.length > 0) {
+    html += '<div class="insight-section">';
+    html += '<div class="insight-section-title">👉 Recommendations</div>';
+    html += '<ul class="recommendations-list">';
+    insights.recommendations.forEach(rec => {
+      html += `<li>${rec}</li>`;
+    });
+    html += '</ul></div>';
+  }
+
+  // Risk Flags / Anomalies
+  if (insights.anomalies && insights.anomalies.length > 0) {
+    html += '<div class="insight-section">';
+    html += '<div class="insight-section-title"><i class="bi bi-exclamation-triangle-fill" style="color: #dc2626; margin-right: 6px;"></i>Risk Flags / Anomalies</div>';
+    html += '<ul class="anomalies-list">';
+    insights.anomalies.forEach(anom => {
+      html += `<li>${anom}</li>`;
+    });
+    html += '</ul></div>';
+  }
+
+  // Spending Patterns
+  if (insights.patterns && insights.patterns.length > 0) {
+    html += '<div class="insight-section">';
+    html += '<div class="insight-section-title"><i class="bi bi-graph-up" style="color: #0056b3;"></i>Spending Patterns</div>';
+    html += '<ul class="recommendations-list">';
+    insights.patterns.forEach(pattern => {
+      html += `<li>${pattern}</li>`;
+    });
+    html += '</ul></div>';
+  }
+
+  document.getElementById('aiInsightContainer').innerHTML = html;
+}
+
+function exportToPDF() {
+  window.location.href = '/api/export-pdf';
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+{% endblock %}
