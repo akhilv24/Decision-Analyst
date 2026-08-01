@@ -14,9 +14,8 @@ requests
 python-dotenv
 Pillow>=10.0.0
 pytesseract>=0.3.10
-rapidocr-onnxruntime>=1.4.0
+rapidocr-onnxruntime==1.2.3
 opencv-python-headless>=4.10.0
 statsmodels>=0.14.0
 reportlab>=4.0.0
 matplotlib>=3.8.0
-requests==2.31.0
