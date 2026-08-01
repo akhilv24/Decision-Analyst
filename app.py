@@ -34,7 +34,7 @@ from backend.budget_manager import BudgetManager
 from backend.ratio_analyzer import RatioAnalyzer
 from backend.budget_analyzer import BudgetVsActualAnalyzer
 from backend.cashflow_analyzer import CashFlowAnalyzer
-from config import DevelopmentConfig
+from config import DevelopmentConfig, ProductionConfig
 
 # Configure logging
 logging.basicConfig(
@@ -56,7 +56,8 @@ class NumpyEncoder(json.JSONEncoder):
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config.from_object(DevelopmentConfig)
+config_class = DevelopmentConfig if os.environ.get('FLASK_ENV') == 'development' else ProductionConfig
+app.config.from_object(config_class)
 app.json_encoder = NumpyEncoder
 
 # Initialize AI Analyzer (skip during database init)

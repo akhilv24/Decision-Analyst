@@ -428,7 +428,11 @@ def google_login():
         nonce = secrets.token_urlsafe(32)
         session['oauth_nonce'] = nonce
         
-        redirect_uri = url_for('auth.google_callback', _external=True)
+        redirect_uri = url_for(
+            'auth.google_callback',
+            _external=True,
+            _scheme='https' if not current_app.debug else None,
+        )
         
         # Initiate OAuth flow with OIDC nonce
         return oauth.google.authorize_redirect(

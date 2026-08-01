@@ -46,6 +46,8 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
+    PREFERRED_URL_SCHEME = 'https'
+    SESSION_COOKIE_SECURE = True
 
 config = {
     'development': DevelopmentConfig,
