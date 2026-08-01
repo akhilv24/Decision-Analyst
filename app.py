@@ -95,10 +95,22 @@ else:
 app.register_blueprint(auth_bp)
 app.register_blueprint(api_bp)
 
+# Ensure database tables exist when the app is imported under Gunicorn.
+with app.app_context():
+    try:
+        db.create_all()
+        logger.info("Database tables ensured at startup")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {str(e)}")
+
 @login_manager.user_loader
 def load_user(user_id):
     """Load user for Flask-Login."""
-    return User.query.get(int(user_id))
+    try:
+        return User.query.get(int(user_id))
+    except Exception as e:
+        logger.warning(f"User load failed for user_id={user_id}: {str(e)}")
+        return None
 
 # User-specific session storage (replaces global session_data)
 def get_session_data():
